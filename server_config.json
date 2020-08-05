@@ -1,0 +1,14 @@
+{
+    "one.example.com":{
+        "ports": [80],
+        "aliases": [],
+        "enable": ["RewriteEngine"],
+        "disable": ["ProxyErrorOverride"]
+    },
+    "two.example.com": {
+        "ports": [80, 443],
+        "aliases": [],
+        "enable": ["RewriteEngine", "SSLProxyEngine"]
+    }
+}
+
