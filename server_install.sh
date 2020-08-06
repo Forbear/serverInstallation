@@ -31,7 +31,7 @@ string_insert() {
 # $2 - $key
 insert_with_affixes() {
     fields=$(echo $1 | jq -rc ".$2")
-    prefix=$(echo $fields | jq -r ".prefix")
+    preffix=$(echo $fields | jq -r ".preffix")
     suffix=$(echo $fields | jq -r ".suffix")
     comment=$(echo $fields | jq -r ".comment")
     items=($(echo $fields | jq -r ".content | .[]"))
@@ -50,7 +50,7 @@ insert_with_affixes() {
 
     if [[ "${#items[@]}" > 0 ]]; then
         sed -i "$inserts a $tabs\# $comment" $temp_file
-        insert=$(($inserts + 1))
+        inserts=$(($inserts + 1))
         for item in ${items[@]}; do
             sed -i "$inserts a $tabs$prefix$item$suffix" $temp_file
             inserts=$(($inserts + 1))
