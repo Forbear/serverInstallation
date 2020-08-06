@@ -16,21 +16,17 @@ sudo $packageManager install httpd
 
 # $1 - config
 # $2 - key
-# $3 - directory to use
+# $3 - inserts
 string_insert() {
-    ports=$(echo $1 | jq -r ".$2 | .[]")
-        local_inserts=$3
-        listning=""
-        for port in $ports; do
-            listning="$listning *:$port"
+    items=($(echo $1 | jq -r ".$2 | .[]"))
+    local_inserts=$3
+    if [[ "${#items[@]}" > 0 ]]; then
+        for item in $items; do
+            sed -i "$local_inserts a $tabs$item on" $temp_file
         done
-
-        if [[ "${ports[*]}" =~ 443 ]]; then
-            sed -i "$inserts a ${tabs}SSLEngine on" $3
-            inserts=$((inserts + 1))
-        fi
-
-        sed -i "s/%%ports%%/ $listning/" $3
+        sed -i "$local_inserts a $tabs\# $key options."
+        echo $local_inserts
+    fi
 }
 
 for i in $servers;do
@@ -46,15 +42,21 @@ for i in $servers;do
     for key in $keys; do
         case $key in
             ports)
-                string_insert $config $key $temp_file
+                ports=$(echo $config | jq -r ".$key | .[]")
+                listning=""
+                for port in $ports; do
+                    listning="$listning *:$port"
+                done
+
+                if [[ "${ports[*]}" =~ 443 ]]; then
+                    sed -i "$inserts a ${tabs}SSLEngine on" $temp_file
+                    inserts=$((inserts + 1))
+                fi
+
+                sed -i "s/%%ports%%/ $listning/" $temp_file
                 ;;
             aliases)
-                altnames=($(echo $config | jq -r ".$key | .[]"))
-                if [[ "${#altnames[@]}" > 0 ]]; then
-                    for name in $altnames; do
-                        echo $name
-                    done
-                fi
+                inserts=string_insert $config $key $inserts
                 ;;
             enable)
                 modules=($(echo $config | jq -r ".$key | .[]"))
