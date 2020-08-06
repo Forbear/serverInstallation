@@ -19,9 +19,9 @@ fi
 string_insert() {
     items=($(echo $1 | jq -r ".$2 | .[]"))
     if [[ "${#items[@]}" > 0 ]]; then
-        sed -i "$local_inserts a $tabs\# $key options." $temp_file
+        sed -i "$inserts a $tabs\# $key options." $temp_file
         for item in $items; do
-            sed -i "$local_inserts a $tabs$item on" $temp_file
+            sed -i "$inserts a $tabs$item on" $temp_file
             inserts=$(($inserts + 1))
         done
     fi
