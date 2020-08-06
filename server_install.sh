@@ -16,16 +16,14 @@ fi
 
 # $1 - config
 # $2 - key
-# $3 - inserts
 string_insert() {
     items=($(echo $1 | jq -r ".$2 | .[]"))
-    local_inserts=$3
     if [[ "${#items[@]}" > 0 ]]; then
+        sed -i "$local_inserts a $tabs\# $key options." $temp_file
         for item in $items; do
             sed -i "$local_inserts a $tabs$item on" $temp_file
+            inserts=$(($inserts + 1))
         done
-        sed -i "$local_inserts a $tabs\# $key options." $temp_file
-        echo $local_inserts
     fi
 }
 
@@ -56,23 +54,13 @@ for i in $servers;do
                 sed -i "s/%%ports%%/ $listning/" $temp_file
                 ;;
             aliases)
-                inserts=$(string_insert "$config" $key $inserts)
+                string_insert "$config" $key
                 ;;
             enable)
-                modules=($(echo $config | jq -r ".$key | .[]"))
-                if [[ "${#modules[@]}" > 0 ]]; then
-                    for module in ${modules[@]}; do 
-                        sed -i "$inserts a $tabs$module on" $temp_file
-                    done
-                fi
+                string_insert "$config" $key
                 ;;
             disable)
-                modules=($(echo $config | jq -r ".$key | .[]"))
-                if [[ "${#modules[@]}" > 0 ]]; then
-                    for module in ${modules[@]}; do
-                        sed -i "$inserts a $tabs$module off" $temp_file
-                    done
-                fi
+                string_insert "$config" $key
                 ;;
         *)
         echo "$key is not supported"
