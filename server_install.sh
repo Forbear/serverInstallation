@@ -16,12 +16,14 @@ fi
 
 # $1 - config
 # $2 - key
+# $3 - suffix
 string_insert() {
     items=($(echo $1 | jq -r ".$2 | .[]"))
     if [[ "${#items[@]}" > 0 ]]; then
         sed -i "$inserts a $tabs\# $key options." $temp_file
+        inserts=$((inserts + 1))
         for item in $items; do
-            sed -i "$inserts a $tabs$item on" $temp_file
+            sed -i "$inserts a $tabs$item $3" $temp_file
             inserts=$(($inserts + 1))
         done
     fi
@@ -57,10 +59,10 @@ for i in $servers;do
                 string_insert "$config" $key
                 ;;
             enable)
-                string_insert "$config" $key
+                string_insert "$config" $key on
                 ;;
             disable)
-                string_insert "$config" $key
+                string_insert "$config" $key off
                 ;;
         *)
         echo "$key is not supported"
