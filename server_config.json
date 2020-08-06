@@ -11,11 +11,11 @@
         "ports": [80, 443],
         "aliases": [],
         "enable": ["RewriteEngine", "SSLProxyEngine"],
-        "affix 0": 
+        "affix_0": 
         {
             "comment": "Include optional files.",
-            "suffix": "IncludeOptional",
-            "preffix": "",
+            "suffix": "",
+            "preffix": "IncludeOptional",
             "content": ["/some_file/path"]
         }
     }

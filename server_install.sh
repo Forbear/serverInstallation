@@ -34,12 +34,25 @@ insert_with_affixes() {
     prefix=$(echo $fields | jq -r ".prefix")
     suffix=$(echo $fields | jq -r ".suffix")
     comment=$(echo $fields | jq -r ".comment")
-    items=$(echo $fields | jq -r ".content")
+    items=($(echo $fields | jq -r ".content | .[]"))
+
+    if [[ "$prefix" != "null" ]]; then
+        prefix="$prefix "
+    else
+        prefix=""
+    fi
+
+    if [[ "$suffix" != "null" ]]; then
+        suffix="$suffix "
+    else
+        suffix=""
+    fi
+
     if [[ "${#items[@]}" > 0 ]]; then
         sed -i "$inserts a $tabs\# $comment" $temp_file
         insert=$(($inserts + 1))
         for item in ${items[@]}; do
-            sed -i "$inserts a $tabs$prefix $item $suffix" $temp_file
+            sed -i "$inserts a $tabs$prefix$item$suffix" $temp_file
             inserts=$(($inserts + 1))
         done
     fi
@@ -83,7 +96,7 @@ for i in $servers;do
             disable)
                 string_insert "$config" $key off
                 ;;
-            affix *)
+            affix*)
                 insert_with_affixes "$config" $key
                 ;;
             *)
