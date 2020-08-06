@@ -56,7 +56,7 @@ for i in $servers;do
                 sed -i "s/%%ports%%/ $listning/" $temp_file
                 ;;
             aliases)
-                inserts=string_insert $config $key $inserts
+                inserts=$(string_insert $config $key $inserts)
                 ;;
             enable)
                 modules=($(echo $config | jq -r ".$key | .[]"))
