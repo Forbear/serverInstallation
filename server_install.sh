@@ -27,6 +27,24 @@ string_insert() {
     fi
 }
 
+# $1 - config
+# $2 - $key
+insert_with_affixes() {
+    fields=$(echo $1 | jq -rc ".$2")
+    prefix=$(echo $fields | jq -r ".prefix")
+    suffix=$(echo $fields | jq -r ".suffix")
+    comment=$(echo $fields | jq -r ".comment")
+    items=$(echo $fields | jq -r ".content")
+    if [[ "${#items[@]}" > 0 ]]; then
+        sed -i "$inserts a $tabs\# $comment" $temp_file
+        insert=$(($inserts + 1))
+        for item in ${items[@]}; do
+            sed -i "$inserts a $tabs$prefix $item $suffix" $temp_file
+            inserts=$(($inserts + 1))
+        done
+    fi
+}
+
 for i in $servers;do
     # Line number to add rules.
     inserts=2
@@ -65,8 +83,11 @@ for i in $servers;do
             disable)
                 string_insert "$config" $key off
                 ;;
-        *)
-        echo "$key is not supported"
+            affix \d)
+                insert_with_affixes "$config" $key
+                ;;
+            *)
+                echo "$key is not supported"
     esac
     done
 

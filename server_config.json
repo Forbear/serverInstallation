@@ -1,14 +1,23 @@
 {
-    "one.example.com":{
+    "one.example.com":
+    {
         "ports": [80],
         "aliases": [],
         "enable": ["RewriteEngine"],
         "disable": ["ProxyErrorOverride"]
     },
-    "two.example.com": {
+    "two.example.com":
+    {
         "ports": [80, 443],
         "aliases": [],
-        "enable": ["RewriteEngine", "SSLProxyEngine"]
+        "enable": ["RewriteEngine", "SSLProxyEngine"],
+        "affix 0": 
+        {
+            "comment": "Include optional files.",
+            "suffix": "IncludeOptional",
+            "preffix": "",
+            "content": ["/some_file/path"]
+        }
     }
 }
 
