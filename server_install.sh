@@ -37,9 +37,9 @@ insert_with_affixes() {
     items=($(echo $fields | jq -r ".content | .[]"))
 
     if [[ "$prefix" != "null" ]]; then
-        prefix="$prefix "
+        prefdix="$prefdix "
     else
-        prefix=""
+        prefdix=""
     fi
 
     if [[ "$suffix" != "null" ]]; then
@@ -52,7 +52,7 @@ insert_with_affixes() {
         sed -i "$inserts a $tabs\# $comment" $temp_file
         inserts=$(($inserts + 1))
         for item in ${items[@]}; do
-            sed -i "$inserts a $tabs$prefix$item$suffix" $temp_file
+            sed -i "$inserts a $tabs$preffix$item$suffix" $temp_file
             inserts=$(($inserts + 1))
         done
     fi
