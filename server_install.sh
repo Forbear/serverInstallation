@@ -34,6 +34,7 @@ insert_with_affixes() {
 
 block_insert() {
     content=$(echo $1 | jq -r ".content")
+    preffix=$(echo $1 | jq -r ".preffix")
     # Other keys.
     block_keys=$(echo $1 | jq -r "keys | .[]" | egrep -v "preffix|content")
     echo "<$preffix $content>" >> $temp_file
