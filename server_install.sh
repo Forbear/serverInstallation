@@ -24,7 +24,7 @@ string_insert() {
         for item in $items; do
             sed -i "$local_inserts a $tabs$item on" $temp_file
         done
-        sed -i "$local_inserts a $tabs\# $key options."
+        sed -i "$local_inserts a $tabs\# $key options." $temp_file
         echo $local_inserts
     fi
 }
