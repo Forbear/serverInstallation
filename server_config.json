@@ -1,22 +1,76 @@
 {
-    "one.example.com":
+    "block_0":
     {
-        "ports": [80],
-        "aliases": [],
-        "enable": ["RewriteEngine"],
-        "disable": ["ProxyErrorOverride"]
+        "preffix": "VirtualHost",
+        "content": "*:80",
+        "affix_0_0":
+        {
+            "comment": "affix 0.0 server name.",
+            "preffix": "ServerName",
+            "content": ["one.example.com"]
+        },
+        "affix_0_1":
+        {
+            "comment": "affix 0.1 enable modules.",
+            "content": ["RewriteEngine"],
+            "suffix": "on"
+        },
+        "affix_0_2":
+        {
+            "comment": "affix 0.2 disable modules.",
+            "content": ["ProxyErrorOverride"],
+            "suffix": "off"
+        }
     },
-    "two.example.com":
+    "block_1":
     {
-        "ports": [80, 443],
-        "aliases": [],
-        "enable": ["RewriteEngine", "SSLProxyEngine"],
-        "affix_0": 
+        "preffix": "VirtualHost",
+        "content": "*:80 *:443",
+        "affix_1_0":
+        {
+            "comment": "affix 1.0 server name.",
+            "preffix": "ServerName",
+            "content": ["two.example.com"]
+        },
+        "affix_1_1":
+        {
+            "comment": "affix 1.1 enable modules.",
+            "content": ["RewriteEngine", "SSLProxyEngine"],
+            "suffix": "on"
+        },
+        "affix_1_2": 
         {
             "comment": "Include optional files.",
-            "suffix": "",
             "preffix": "IncludeOptional",
             "content": ["/some_file/path"]
+        }
+    },
+    "block_2":
+    {
+        "preffix": "VirtualHost",
+        "content": "*:80 *:8080",
+        "affix_2_0":
+        {
+            "comment": "affix 2.0 server name.",
+            "preffix": "ServerName",
+            "content": ["block.example.com"]
+        },
+        "affix_2_1":
+        {
+            "comment": "affix 2.1 server alias.",
+            "preffix": "ServerAlias",
+            "content": ["www.block.example.com"]
+        },
+        "block_2_0":
+        {
+            "preffix": "LocationMatch",
+            "content": "^/example",
+            "affix_2_0_0":
+            {
+                "comment": "affix 2.0.0.",
+                "content": "ProxyPreserveHost",
+                "suffix": "off"
+            }
         }
     }
 }
