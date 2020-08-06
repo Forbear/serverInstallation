@@ -1,8 +1,6 @@
 #! /bin/bash
 servers=$(jq -r '. | keys | .[]' server_config.json)
 
-# Line number to add rules.
-inserts=2
 # Tabulation with spaces.
 tabs='\ \ \ \ '
 # Check Linux distro.
@@ -22,7 +20,7 @@ string_insert() {
     if [[ "${#items[@]}" > 0 ]]; then
         sed -i "$inserts a $tabs\# $key options." $temp_file
         inserts=$((inserts + 1))
-        for item in $items; do
+        for item in ${items[@]}; do
             sed -i "$inserts a $tabs$item $3" $temp_file
             inserts=$(($inserts + 1))
         done
@@ -30,6 +28,9 @@ string_insert() {
 }
 
 for i in $servers;do
+    # Line number to add rules.
+    inserts=2
+
     config=$(jq ".\"$i\"" server_config.json)
     temp_file=$(mktemp)
 
