@@ -64,11 +64,11 @@
         "block_2_0":
         {
             "preffix": "LocationMatch",
-            "content": "^/example",
+            "content": "^/example/.*",
             "affix_2_0_0":
             {
                 "comment": "affix 2.0.0.",
-                "content": "ProxyPreserveHost",
+                "content": ["ProxyPreserveHost"],
                 "suffix": "off"
             }
         }

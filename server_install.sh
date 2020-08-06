@@ -12,20 +12,20 @@ insert_with_affixes() {
     comment=$(echo $fields | jq -r ".comment")
     items=($(echo $fields | jq -r ".content | .[]"))
 
-    if [[ "$prefix" != "null" ]]; then
+    if [[ "$preffix" != "null" ]]; then
         preffix="$preffix "
     else
         preffix=""
     fi
 
     if [[ "$suffix" != "null" ]]; then
-        suffix="$suffix "
+        suffix=" $suffix"
     else
         suffix=""
     fi
 
     if [[ "${#items[@]}" > 0 ]]; then
-        echo "$tabs\# $comment" >> $temp_file
+        echo "$tabs# $comment" >> $temp_file
         for item in ${items[@]}; do
             echo "$tabs$preffix$item$suffix" >> $temp_file
         done
@@ -33,10 +33,9 @@ insert_with_affixes() {
 }
 
 block_insert() {
-    preffix=$(echo $1 | jq -r ".preffix")
     content=$(echo $1 | jq -r ".content")
     # Other keys.
-    block_keys=$(echo $1 | jq -r "keys | .[]" | grep -v (preffix|content))
+    block_keys=$(echo $1 | jq -r "keys | .[]" | egrep -v "preffix|content")
     echo "<$preffix $content>" >> $temp_file
     for key in $block_keys; do
         case $key in
@@ -51,6 +50,7 @@ block_insert() {
                 echo "$key is not supported"
         esac
     done
+    preffix=$(echo $1 | jq -r ".preffix")
     echo "</$preffix>" >> $temp_file
 }
 #####################
@@ -65,7 +65,7 @@ servers=$(jq -r '. | keys | .[]' server_config.json)
 
 # Tabulation with spaces.
 # Should be multiplied for blocks.
-tabs='\ \ \ \ '
+tabs='    '
 # Check Linux distro.
 version=$(sudo cat /proc/version)
 
