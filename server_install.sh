@@ -83,7 +83,7 @@ for i in $servers;do
             disable)
                 string_insert "$config" $key off
                 ;;
-            affix \d)
+            affix *)
                 insert_with_affixes "$config" $key
                 ;;
             *)
