@@ -37,9 +37,9 @@ insert_with_affixes() {
     items=($(echo $fields | jq -r ".content | .[]"))
 
     if [[ "$prefix" != "null" ]]; then
-        prefdix="$prefdix "
+        preffix="$preffix "
     else
-        prefdix=""
+        preffix=""
     fi
 
     if [[ "$suffix" != "null" ]]; then
