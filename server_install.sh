@@ -48,7 +48,7 @@ block_insert() {
                 block_insert "$config" "$_tabs$tabs"
                 ;;
             affix*)
-                insert_with_affixes "$1" $key
+                insert_with_affixes "$1" $key "$_tabs$tabs"
                 ;;
             *)
                 echo "$key is not supported"
