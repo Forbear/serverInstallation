@@ -5,12 +5,14 @@
 #################
 # $1 - config
 # $2 - $key
+# $3 - tabs
 insert_with_affixes() {
-    fields=$(echo $1 | jq -rc ".$2")
-    preffix=$(echo $fields | jq -r ".preffix")
-    suffix=$(echo $fields | jq -r ".suffix")
-    comment=$(echo $fields | jq -r ".comment")
-    items=($(echo $fields | jq -r ".content | .[]"))
+    local fields=$(echo $1 | jq -rc ".$2")
+    local preffix=$(echo $fields | jq -r ".preffix")
+    local suffix=$(echo $fields | jq -r ".suffix")
+    local comment=$(echo $fields | jq -r ".comment")
+    local items=($(echo $fields | jq -r ".content | .[]"))
+    local _tabs=$3
 
     if [[ "$preffix" != "null" ]]; then
         preffix="$preffix "
@@ -25,24 +27,25 @@ insert_with_affixes() {
     fi
 
     if [[ "${#items[@]}" > 0 ]]; then
-        echo "$tabs# $comment" >> $temp_file
+        echo "$_tabs# $comment" >> $temp_file
         for item in ${items[@]}; do
-            echo "$tabs$preffix$item$suffix" >> $temp_file
+            echo "$_tabs$preffix$item$suffix" >> $temp_file
         done
     fi
 }
 
 block_insert() {
-    content=$(echo $1 | jq -r ".content")
-    preffix=$(echo $1 | jq -r ".preffix")
+    local content=$(echo $1 | jq -r ".content")
+    local preffix=$(echo $1 | jq -r ".preffix")
+    local _tabs=$2
     # Other keys.
-    block_keys=$(echo $1 | jq -r "keys | .[]" | egrep -v "preffix|content")
-    echo "<$preffix $content>" >> $temp_file
+    local block_keys=$(echo $1 | jq -r "keys | .[]" | egrep -v "preffix|content")
+    echo "$_tabs<$preffix $content>" >> $temp_file
     for key in $block_keys; do
         case $key in
             block*)
-                config=$(echo $1 | jq -c ".$key")
-                block_insert "$config"
+                local config=$(echo $1 | jq -c ".$key")
+                block_insert "$config" "$_tabs$tabs"
                 ;;
             affix*)
                 insert_with_affixes "$1" $key
@@ -51,8 +54,7 @@ block_insert() {
                 echo "$key is not supported"
         esac
     done
-    preffix=$(echo $1 | jq -r ".preffix")
-    echo "</$preffix>" >> $temp_file
+    echo "$_tabs</$preffix>" >> $temp_file
 }
 #####################
 ### END FUNCTIONS ###
@@ -83,7 +85,7 @@ for i in $servers;do
     config=$(jq -c ".$i" server_config.json)
     temp_file=$(mktemp)
 
-    block_insert "$config"
+    block_insert "$config" ""
 
     cat $temp_file
     rm $temp_file

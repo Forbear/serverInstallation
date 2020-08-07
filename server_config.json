@@ -35,7 +35,7 @@
         "affix_1_1":
         {
             "comment": "affix 1.1 enable modules.",
-            "content": ["RewriteEngine", "SSLProxyEngine"],
+            "content": ["SSLEngine", "RewriteEngine", "SSLProxyEngine"],
             "suffix": "on"
         },
         "affix_1_2": 
