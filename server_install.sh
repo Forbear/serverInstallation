@@ -77,8 +77,9 @@ if [ -z "${version##*Red Hat*}" ]; then
 fi
 
 # sudo $packageManager install httpd
+# sudo mkdir -r /etc/httpd/conf.d/
 
-for i in $servers;do
+for i in $servers; do
     # Line number to add rules.
     inserts=2
 
@@ -87,7 +88,8 @@ for i in $servers;do
 
     block_insert "$config" ""
 
-    cat $temp_file
+    cat $temp_file | grep "ServerName"
+    mv $temp_file /etc/httpd/conf.d/$i_server.conf
     rm $temp_file
 done
    

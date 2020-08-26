@@ -25,7 +25,7 @@
     "block_1":
     {
         "preffix": "VirtualHost",
-        "content": "*:80 *:443",
+        "content": "*:80 *:8443",
         "affix_1_0":
         {
             "comment": "affix 1.0 server name.",
@@ -35,7 +35,7 @@
         "affix_1_1":
         {
             "comment": "affix 1.1 enable modules.",
-            "content": ["SSLEngine", "RewriteEngine", "SSLProxyEngine"],
+            "content": ["RewriteEngine", "SSLProxyEngine"],
             "suffix": "on"
         },
         "affix_1_2": 
