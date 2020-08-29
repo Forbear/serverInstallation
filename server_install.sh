@@ -64,8 +64,7 @@ main() {
 
         block_insert "$config" ""
 
-        sudo mv $temp_file /etc/httpd/conf.d/$i_server.conf
-        rm $temp_file
+        sudo mv $temp_file "/etc/httpd/conf.d/${i}_server.conf"
     done
 }
 #####################
@@ -87,5 +86,5 @@ version=$(sudo cat /proc/version)
 if [ -z "${version##*Red Hat*}" ]; then
     packageManager=yum
 fi
-
-sudo $packageManager install jq httpd && main $servers
+# mod_ssl should be encluded if SSL is in use in json.
+sudo $packageManager install jq httpd mod_ssl && main "$servers"
