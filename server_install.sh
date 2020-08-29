@@ -88,4 +88,4 @@ if [ -z "${version##*Red Hat*}" ]; then
     packageManager=yum
 fi
 
-sudo $packageManager install jq httpd && main servers
+sudo $packageManager install jq httpd && main $servers
