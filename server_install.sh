@@ -64,7 +64,7 @@ main() {
 
         block_insert "$config" ""
 
-        mv $temp_file /etc/httpd/conf.d/$i_server.conf
+        sudo mv $temp_file /etc/httpd/conf.d/$i_server.conf
         rm $temp_file
     done
 }
@@ -88,4 +88,6 @@ if [ -z "${version##*Red Hat*}" ]; then
     packageManager=yum
 fi
 
-sudo $packageManager install httpd && sudo main servers
+sudo $packageManager install httpd && main servers
+
+return 0
