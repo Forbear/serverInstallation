@@ -56,6 +56,18 @@ block_insert() {
     done
     echo "$_tabs</$preffix>" >> $temp_file
 }
+
+main() {
+    for i in $1; do
+        local config=$(jq -c ".$i" server_config.json)
+        local temp_file=$(mktemp)
+
+        block_insert "$config" ""
+
+        mv $temp_file /etc/httpd/conf.d/$i_server.conf
+        rm $temp_file
+    done
+}
 #####################
 ### END FUNCTIONS ###
 #####################
@@ -76,16 +88,4 @@ if [ -z "${version##*Red Hat*}" ]; then
     packageManager=yum
 fi
 
-sudo $packageManager install httpd
-# sudo mkdir -r /etc/httpd/conf.d/
-
-for i in $servers; do
-    config=$(jq -c ".$i" server_config.json)
-    temp_file=$(mktemp)
-
-    block_insert "$config" ""
-
-    sudo mv $temp_file /etc/httpd/conf.d/$i_server.conf
-    rm $temp_file
-done
-   
+sudo $packageManager install httpd && sudo main servers
