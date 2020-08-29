@@ -76,20 +76,16 @@ if [ -z "${version##*Red Hat*}" ]; then
     packageManager=yum
 fi
 
-# sudo $packageManager install httpd
+sudo $packageManager install httpd
 # sudo mkdir -r /etc/httpd/conf.d/
 
 for i in $servers; do
-    # Line number to add rules.
-    inserts=2
-
     config=$(jq -c ".$i" server_config.json)
     temp_file=$(mktemp)
 
     block_insert "$config" ""
 
-    cat $temp_file | grep "ServerName"
-    mv $temp_file /etc/httpd/conf.d/$i_server.conf
+    sudo mv $temp_file /etc/httpd/conf.d/$i_server.conf
     rm $temp_file
 done
    
