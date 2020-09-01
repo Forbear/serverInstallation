@@ -57,34 +57,114 @@ block_insert() {
     echo "$_tabs</$preffix>" >> $temp_file
 }
 
+no_result() {
+    rm $temp_file
+}
+
+test_result() {
+    cat $temp_file
+    rm $temp_file
+}
+
+move_result() {
+    if [ -d "$output_dir" ]; then
+        mv $temp_file "${output_dir}${i}_server.conf"
+    else
+        echo "$output_dir does not exist."
+    fi
+}
+
 main() {
-    for i in $1; do
-        local config=$(jq -c ".$i" server_config.json)
+    servers=$(jq -r '. | keys | .[]' $1)
+    for i in $servers; do
+        local config=$(jq -c ".$i" $1)
         local temp_file=$(mktemp)
 
         block_insert "$config" ""
-
-        sudo mv $temp_file "/etc/httpd/conf.d/${i}_server.conf"
+        $2
     done
 }
-#####################
-### END FUNCTIONS ###
-#####################
+
+#########################
+### DEFAULT VARIABLES ###
+#########################
+exec_mode=general
+config_file=server_config.json
+output_dir='/etc/httpd/conf.d/'
+tabs='    '
+verbose=false
 
 ########################
 ### SCTIPT EXECUTION ###
 ########################
 
-servers=$(jq -r '. | keys | .[]' server_config.json)
+while [ -n "$1" ]; do
+    case $1 in
+        -f)
+            config_file="$2"
+            shift
+            ;;
+        -m)
+            exec_mode="$2"
+            shift
+            ;;
+        -o)
+            ###### !!! ######
+            # Somewhere this dir should be checked for RW access.
+            ###### !!! ######
+            output_dir="$2"
+            shift
+            ;;
+        -v)
+            verbose=true
+            ;;
+        *)
+            echo "help?"
+    esac
+    shift
+done
 
-# Tabulation with spaces.
-# Should be multiplied for blocks.
-tabs='    '
-# Check Linux distro.
-version=$(sudo cat /proc/version)
+if [ -f "$config_file" ]; then
+    # Check Linux distro.
+    version=$(cat /etc/*release* | grep ID_LIKE)
 
-if [ -z "${version##*Red Hat*}" ]; then
-    packageManager=yum
+    case $version in
+        *debian*)
+            packageManager=apt-get
+            ;;
+        *centos*)
+            packageManager=yum
+            ;;
+        *)
+            echo "$version is not supported."
+    esac
+    # mod_ssl should be encluded if SSL is in use in json.
+    case $exec_mode in
+        test)
+            if $verbose ; then
+                echo "Test mode."
+                main "$config_file" test_result
+            else
+                main "$config_file" no_result
+            fi
+            ;;
+        no-install)
+            if $verbose ; then
+                echo "No install mode."
+            fi
+
+            main "$config_file" move_result
+
+            if $verbose ; then
+                echo "Done. Result was moved to ${output_dir}."
+            fi
+            ;;
+        general)
+            sudo $packageManager install -y jq httpd mod_ssl && main "$config_file" move_result
+            ;;
+        *)
+            "Unexpected execute mode was selected. Error."
+    esac
+else
+    echo "${config_file} was not found. Please make sure configuration file was named properly."
 fi
-# mod_ssl should be encluded if SSL is in use in json.
-sudo $packageManager install jq httpd mod_ssl && main "$servers"
