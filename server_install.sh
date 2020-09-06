@@ -74,6 +74,28 @@ move_result() {
     fi
 }
 
+# docker run --rm -d -p 8080:80 --name apache --mount source=apache-conf,target=/mnt/configuration apache:0.1
+docker_create() {
+    docker image build -t $docker_image $docker_context
+    docker volume create $docker_volume_name
+}
+
+docker_run() {
+    docker run --rm -d -p $docker_rp_server_bind \
+        --name $docker_rp_name \
+        --mount source=$docker_volume_name,target=$docker_mount_point \
+        $docker_image
+}
+
+docker_stop() {
+    docker stop $docker_rp_name
+}
+
+docker_destroy() {
+    docker_stop
+    docker volume rm $docker_volume_name
+}
+
 main() {
     servers=$(jq -r '. | keys | .[]' $1)
     for i in $servers; do
@@ -93,6 +115,12 @@ config_file=server_config.json
 output_dir='/etc/httpd/conf.d/'
 tabs='    '
 verbose=false
+docker_mount_point='/mnt/configuration'
+docker_volume_name='apache-configuration'
+docker_rp_server_bind='8080:80'
+docker_rp_name='apache-docker'
+docker_image='apache_ds'
+docker_context='.'
 
 ########################
 ### SCTIPT EXECUTION ###
@@ -158,6 +186,23 @@ if [ -f "$config_file" ]; then
             if $verbose ; then
                 echo "Done. Result was moved to ${output_dir}."
             fi
+            ;;
+        docker_init)
+            if [ -f "$docker_context/dockerfile" ]; then
+                docker_create
+            else
+                echo "dockerfile was not found."
+            fi
+            ;;
+        docker_run)
+            # Spmewhere here docker image should be checked defore run.
+            docker_run
+            ;;
+        docker_stop)
+            docker_stop
+            ;;
+        docker_rm)
+            docker_destroy
             ;;
         general)
             sudo $packageManager install -y jq httpd mod_ssl && main "$config_file" move_result
