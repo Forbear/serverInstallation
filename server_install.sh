@@ -6,7 +6,7 @@
 # $1 - config
 # $2 - $key
 # $3 - tabs
-insert_with_affixes() {
+insertWithAffixes() {
     local fields=$(echo $1 | jq -rc ".$2")
     local preffix=$(echo $fields | jq -r ".preffix")
     local suffix=$(echo $fields | jq -r ".suffix")
@@ -34,7 +34,7 @@ insert_with_affixes() {
     fi
 }
 
-block_insert() {
+blockInsert() {
     local content=$(echo $1 | jq -r ".content")
     local preffix=$(echo $1 | jq -r ".preffix")
     local _tabs=$2
@@ -45,10 +45,10 @@ block_insert() {
         case $key in
             block*)
                 local config=$(echo $1 | jq -c ".$key")
-                block_insert "$config" "$_tabs$tabs"
+                blockInsert "$config" "$_tabs$tabs"
                 ;;
             affix*)
-                insert_with_affixes "$1" $key "$_tabs$tabs"
+                insertWithAffixes "$1" $key "$_tabs$tabs"
                 ;;
             *)
                 echo "$key is not supported"
@@ -61,39 +61,58 @@ no_result() {
     rm $temp_file
 }
 
-test_result() {
+testResult() {
     cat $temp_file
     rm $temp_file
 }
 
-move_result() {
+moveResult() {
     if [ -d "$output_dir" ]; then
         mv $temp_file "${output_dir}${i}_server.conf"
+        chmod 644 ${output_dir}${i}_server.conf
     else
         echo "$output_dir does not exist."
     fi
 }
 
-# docker run --rm -d -p 8080:80 --name apache --mount source=apache-conf,target=/mnt/configuration apache:0.1
-docker_create() {
-    docker image build -t $docker_image $docker_context
-    docker volume create $docker_volume_name
+# docker container create --name apache-docker --mount source=apache-configuration,target=/etc/httpd/conf.d/ apache_ds
+dockerCreate() {
+    if [ -f "$docker_context/dockerfile" ]; then
+        docker image build -t $docker_image_name $docker_context
+        docker volume create $docker_volume_name
+        docker container create \
+            --name $docker_rp_name \
+            --mount source=$docker_volume_name,target=$docker_mount_point \
+            -p $docker_rp_server_bind \
+            $docker_image_name
+    else
+        echo "dockerfile was not found."
+    fi
 }
 
-docker_run() {
-    docker run --rm -d -p $docker_rp_server_bind \
-        --name $docker_rp_name \
-        --mount source=$docker_volume_name,target=$docker_mount_point \
-        $docker_image
+dockerCopy() {
+    if $verbose ; then
+        echo "Copy files from $output_dir to docker container $docker_rp_name:$docker_mount_point."
+    fi
+    local conf_list=$(ls $output_dir)
+    for file in $conf_list; do
+        docker container cp $output_dir$file $docker_rp_name:$docker_mount_point$file
+    done
 }
 
-docker_stop() {
-    docker stop $docker_rp_name
+dockerRun() {
+    docker container start $docker_rp_name
 }
 
-docker_destroy() {
-    docker_stop
+dockerStop() {
+    docker container stop $docker_rp_name
+}
+
+dockerDestroy() {
+    dockerStop
+    docker container rm $docker_rp_name
     docker volume rm $docker_volume_name
+    docker image rm $docker_image_name
 }
 
 main() {
@@ -102,7 +121,7 @@ main() {
         local config=$(jq -c ".$i" $1)
         local temp_file=$(mktemp)
 
-        block_insert "$config" ""
+        blockInsert "$config" ""
         $2
     done
 }
@@ -110,16 +129,16 @@ main() {
 #########################
 ### DEFAULT VARIABLES ###
 #########################
-exec_mode=general
+exec_mode=test
 config_file=server_config.json
-output_dir='/etc/httpd/conf.d/'
+output_dir='/tmp/apache-rp-conf/'
 tabs='    '
 verbose=false
-docker_mount_point='/mnt/configuration'
+docker_mount_point='/etc/httpd/conf.d/'
 docker_volume_name='apache-configuration'
 docker_rp_server_bind='8080:80'
 docker_rp_name='apache-docker'
-docker_image='apache_ds'
+docker_image_name='apache_ds'
 docker_context='.'
 
 ########################
@@ -144,10 +163,12 @@ while [ -n "$1" ]; do
             shift
             ;;
         -v)
+            # Toggle verbose mode. Disabled by default.
             verbose=true
             ;;
         *)
             echo "help?"
+            exec_mode='error'
     esac
     shift
 done
@@ -168,44 +189,43 @@ if [ -f "$config_file" ]; then
     esac
     # mod_ssl should be encluded if SSL is in use in json.
     case $exec_mode in
-        test)
+        test-apache-config)
             if $verbose ; then
                 echo "Test mode."
-                main "$config_file" test_result
+                main "$config_file" testResult
             else
                 main "$config_file" no_result
             fi
             ;;
-        no-install)
-            if $verbose ; then
-                echo "No install mode."
-            fi
-
-            main "$config_file" move_result
-
-            if $verbose ; then
-                echo "Done. Result was moved to ${output_dir}."
-            fi
+        generate-apache-config)
+            main "$config_file" moveResult
             ;;
-        docker_init)
-            if [ -f "$docker_context/dockerfile" ]; then
-                docker_create
-            else
-                echo "dockerfile was not found."
-            fi
+        cp-config)
+            dockerCopy
             ;;
-        docker_run)
+        docker-init)
+            dockerCreate
+            ;;
+        docker-run)
             # Spmewhere here docker image should be checked defore run.
-            docker_run
+            dockerRun
             ;;
-        docker_stop)
-            docker_stop
+        docker-stop)
+            dockerStop
             ;;
-        docker_rm)
-            docker_destroy
+        docker-rm)
+            dockerDestroy
+            ;;
+        docker-full)
+            main "$config_file" moveResult
+            dockerCreate
+            dockerCopy
+            dockerRun
             ;;
         general)
-            sudo $packageManager install -y jq httpd mod_ssl && main "$config_file" move_result
+            # Here should be docker installation implemented.
+            sudo $packageManager install -y jq
+            main "$config_file" moveResult
             ;;
         *)
             "Unexpected execute mode was selected. Error."
