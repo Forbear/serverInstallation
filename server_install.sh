@@ -3,6 +3,22 @@
 #################
 ### FUNCTIONS ###
 #################
+
+specifyPackageManager() {
+    # Check Linux distro.
+    version=$(cat /etc/*release* | grep ID_LIKE)
+    case $version in
+        *debian*)
+            packageManager=apt-get
+            ;;
+        *centos*)
+            packageManager=yum
+            ;;
+        *)
+            echo "$version is not supported."
+    esac
+}
+
 # $1 - config
 # $2 - $key
 # $3 - tabs
@@ -67,11 +83,14 @@ testResult() {
 }
 
 moveResult() {
-    if [ -d "$output_dir" ]; then
+    if ! [ -d "$output_dir" ]; then
+        mkdir $output_dir
+    fi
+    if [ -w "$output_dir" ]; then
         mv $temp_file "${output_dir}${i}_server.conf"
         chmod 644 ${output_dir}${i}_server.conf
     else
-        echo "$output_dir does not exist."
+        echo "Error to write in $output_dir."
     fi
 }
 
@@ -80,11 +99,18 @@ dockerCreate() {
     if [ -f "$docker_context/dockerfile" ]; then
         docker image build -t $docker_image_name $docker_context
         docker volume create $docker_volume_name
-        docker container create \
-            --name $docker_rp_name \
-            --mount source=$docker_volume_name,target=$docker_mount_point \
-            -p $docker_rp_server_bind \
-            $docker_image_name
+        if $docker_container_exposed ; then
+            docker container create \
+                --name $docker_container_name \
+                --mount source=$docker_volume_name,target=$docker_mount_point \
+                -p $docker_container_bind \
+                $docker_image_name
+        else
+            docker container create \
+                --name $docker_container_name \
+                --mount source=$docker_volume_name,target=$docker_mount_point \
+                $docker_image_name
+        fi
     else
         echo "dockerfile was not found."
     fi
@@ -92,30 +118,30 @@ dockerCreate() {
 
 dockerCopy() {
     if $verbose ; then
-        echo "Copy files from $output_dir to docker container $docker_rp_name:$docker_mount_point."
+        echo "Copy files from $output_dir to docker container $docker_container_name:$docker_mount_point."
     fi
     local conf_list=$(ls $output_dir)
     for file in $conf_list; do
-        docker container cp $output_dir$file $docker_rp_name:$docker_mount_point$file
+        docker container cp $output_dir$file $docker_container_name:$docker_mount_point$file
     done
 }
 
 dockerRun() {
-    docker container start $docker_rp_name
+    docker container start $docker_container_name
 }
 
 dockerStop() {
-    docker container stop $docker_rp_name
+    docker container stop $docker_container_name
 }
 
 dockerDestroy() {
     dockerStop
-    docker container rm $docker_rp_name
+    docker container rm $docker_container_name
     docker volume rm $docker_volume_name
     docker image rm $docker_image_name
 }
 
-main() {
+makeApacheConfig() {
     servers=$(jq -r '. | keys | .[]' $1)
     for i in $servers; do
         local config=$(jq -c ".$i" $1)
@@ -126,29 +152,75 @@ main() {
     done
 }
 
+executeScript() {
+    if [ -f $config_file ]; then
+        # mod_ssl should be encluded if SSL is in use in json.
+        case $exec_mode in
+            test-apache-config)
+                if $verbose ; then
+                    echo "Test mode."
+                    makeApacheConfig "$config_file" testResult
+                else
+                    makeApacheConfig "$config_file" no_result
+                fi
+                ;;
+            generate-apache-config)
+                makeApacheConfig "$config_file" moveResult
+                ;;
+            cp-config)
+                dockerCopy
+                ;;
+            docker-init)
+                dockerCreate
+                ;;
+            docker-run)
+                # Spmewhere here docker image should be checked defore run.
+                dockerRun
+                ;;
+            docker-stop)
+                dockerStop
+                ;;
+            docker-rm)
+                dockerDestroy
+                ;;
+            docker-full)
+                makeApacheConfig "$config_file" moveResult
+                dockerCreate
+                dockerCopy
+                dockerRun
+                ;;
+            general)
+                # Here should be docker installation implemented.
+                specifyPackageManager
+                sudo $packageManager install -y -q jq
+                makeApacheConfig "$config_file" moveResult
+                ;;
+            *)
+                echo "Unexpected execute mode was selected. Error."
+        esac
+    else
+        echo "$config_file was not found. Please make sure configuration file was named properly."
+    fi
+}
+
 #########################
 ### DEFAULT VARIABLES ###
 #########################
-exec_mode=test
-config_file=server_config.json
-output_dir='/tmp/apache-rp-conf/'
 tabs='    '
-verbose=false
-docker_mount_point='/etc/httpd/conf.d/'
-docker_volume_name='apache-configuration'
-docker_rp_server_bind='8080:80'
-docker_rp_name='apache-docker'
-docker_image_name='apache_ds'
-docker_context='.'
+from_file=true
 
 ########################
 ### SCTIPT EXECUTION ###
 ########################
 
+# Parameters parsing
 while [ -n "$1" ]; do
     case $1 in
+        -j)
+            from_file=false
+            ;;
         -f)
-            config_file="$2"
+            variables_init="$2"
             shift
             ;;
         -m)
@@ -173,63 +245,20 @@ while [ -n "$1" ]; do
     shift
 done
 
-if [ -f "$config_file" ]; then
-    # Check Linux distro.
-    version=$(cat /etc/*release* | grep ID_LIKE)
-
-    case $version in
-        *debian*)
-            packageManager=apt-get
-            ;;
-        *centos*)
-            packageManager=yum
-            ;;
-        *)
-            echo "$version is not supported."
-    esac
-    # mod_ssl should be encluded if SSL is in use in json.
-    case $exec_mode in
-        test-apache-config)
-            if $verbose ; then
-                echo "Test mode."
-                main "$config_file" testResult
-            else
-                main "$config_file" no_result
-            fi
-            ;;
-        generate-apache-config)
-            main "$config_file" moveResult
-            ;;
-        cp-config)
-            dockerCopy
-            ;;
-        docker-init)
-            dockerCreate
-            ;;
-        docker-run)
-            # Spmewhere here docker image should be checked defore run.
-            dockerRun
-            ;;
-        docker-stop)
-            dockerStop
-            ;;
-        docker-rm)
-            dockerDestroy
-            ;;
-        docker-full)
-            main "$config_file" moveResult
-            dockerCreate
-            dockerCopy
-            dockerRun
-            ;;
-        general)
-            # Here should be docker installation implemented.
-            sudo $packageManager install -y jq
-            main "$config_file" moveResult
-            ;;
-        *)
-            "Unexpected execute mode was selected. Error."
-    esac
+if  $from_file ; then
+    activeList=$(ls active/)
+    if [[ "${#activeList[@]}" > 0 ]]; then
+        for set in ${activeList[@]}; do
+            # Import defined variables.
+            source active/$set
+            # Execute script according to variables.
+            executeScript
+        done
+    else
+        echo "Active variables are not set."
+    fi
 else
-    echo "${config_file} was not found. Please make sure configuration file was named properly."
+    # Was not tested.
+    # executeScript
+    echo 'Manual variables input.'
 fi
