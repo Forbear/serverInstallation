@@ -95,20 +95,23 @@ moveResult() {
 }
 
 # docker container create --name apache-docker --mount source=apache-configuration,target=/etc/httpd/conf.d/ apache_ds
-dockerCreate() {
+createDockerContainer() {
     if [ -f "$docker_context/dockerfile" ]; then
-        docker image build -t $docker_image_name $docker_context
+        docker image build --target $docker_target -t $docker_image_name $docker_context
         docker volume create $docker_volume_name
+        docker network create --attachable $docker_network_name
         if $docker_container_exposed ; then
-            docker container create \
+            docker container create --rm \
                 --name $docker_container_name \
                 --mount source=$docker_volume_name,target=$docker_mount_point \
                 -p $docker_container_bind \
+                --network $docker_network_name \
                 $docker_image_name
         else
-            docker container create \
+            docker container create --rm \
                 --name $docker_container_name \
                 --mount source=$docker_volume_name,target=$docker_mount_point \
+                --network $docker_network_name \
                 $docker_image_name
         fi
     else
@@ -116,7 +119,7 @@ dockerCreate() {
     fi
 }
 
-dockerCopy() {
+copyToDockerVolume() {
     if $verbose ; then
         echo "Copy files from $output_dir to docker container $docker_container_name:$docker_mount_point."
     fi
@@ -130,15 +133,25 @@ dockerRun() {
     docker container start $docker_container_name
 }
 
-dockerStop() {
+stopDocker() {
     docker container stop $docker_container_name
 }
 
-dockerDestroy() {
-    dockerStop
+destroyDocker() {
+    stopDocker
     docker container rm $docker_container_name
     docker volume rm $docker_volume_name
     docker image rm $docker_image_name
+}
+
+getDockerStructure() {
+    # Get docker images names.
+    docker_versions=$(docker images --format='{{json .Repository}}')
+    # Get docker volumes names.
+    docker_volumes=$(docker volume ls --format='{{json .Name}}')
+    # Get docker networks names.
+    docker_networks=$(docker network ls --format='{{json .Name}}')
+    echo -e "$docker_versions \n $docker_volumes \n $docker_networks"
 }
 
 makeApacheConfig() {
@@ -164,29 +177,36 @@ executeScript() {
                     makeApacheConfig "$config_file" no_result
                 fi
                 ;;
+            prerun)
+                getDockerStructure
+                ;;
             generate-apache-config)
                 makeApacheConfig "$config_file" moveResult
                 ;;
             cp-config)
-                dockerCopy
+                copyToDockerVolume
                 ;;
             docker-init)
-                dockerCreate
+                getDockerStructure
+                createDockerContainer
                 ;;
             docker-run)
+                getDockerStructure
                 # Spmewhere here docker image should be checked defore run.
                 dockerRun
                 ;;
             docker-stop)
-                dockerStop
+                getDockerStructure
+                stopDocker
                 ;;
             docker-rm)
-                dockerDestroy
+                destroyDocker
                 ;;
             docker-full)
                 makeApacheConfig "$config_file" moveResult
-                dockerCreate
-                dockerCopy
+                # getDockerStructure
+                createDockerContainer
+                copyToDockerVolume
                 dockerRun
                 ;;
             general)

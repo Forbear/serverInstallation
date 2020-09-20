@@ -7,14 +7,14 @@
         {
             "comment": "affix 0.0 server name.",
             "preffix": "ServerName",
-            "content": ["hiden.zero.com"]
+            "content": ["hiden.one"]
         },
         "affix_0_1":
         {
-            "comment": "affix 0.1 custom header.",
+            "comment": "affix 0.1 set custom header.",
             "preffix": "Header set",
-            "content": ["server"],
-            "suffix": "zero"
+            "content": ["Application-Track"],
+            "suffix": "One"
         },
         "affix_0_2":
         {
@@ -24,10 +24,10 @@
         },
         "affix_0_3":
         {
-            "comment": "affix 0.3 PT.",
-            "preffix": "RewriteRule",
-            "content": ["^/.*"],
-            "suffix": "/ [PT]"
+            "comment": "Logs placement.",
+            "preffix": "CustomLog",
+            "content": ["logs/one_access_log"],
+            "suffix": "combined"
         }
     }
 }
