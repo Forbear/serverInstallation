@@ -2,7 +2,6 @@
 exec_mode=docker-full
 config_file='configs/hiden_one_config.json'
 output_dir='/tmp/apache-hiden-one/'
-verbose=false
 docker_mount_point='/etc/httpd/conf.d/'
 docker_volume_name='apache-hiden-one-volume'
 docker_network_name='apache-rp-network'

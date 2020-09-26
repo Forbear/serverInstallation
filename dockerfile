@@ -18,3 +18,7 @@ RUN rm -r /etc/httpd/conf.d/
 WORKDIR /var/www/html/
 COPY content/index.html .
 CMD ["/usr/sbin/httpd", "-D", "FOREGROUND"]
+
+FROM scratch as base
+LABEL maintainer="Daniil Silniahin"
+CMD echo "Base."

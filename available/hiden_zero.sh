@@ -2,7 +2,6 @@
 exec_mode=docker-full
 config_file='configs/hiden_zero_config.json'
 output_dir='/tmp/apache-hiden-zero/'
-verbose=false
 docker_mount_point='/etc/httpd/conf.d/'
 docker_volume_name='apache-hiden-zero-volume'
 docker_network_name='apache-rp-network'

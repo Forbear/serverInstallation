@@ -1,0 +1,1 @@
+ln -s ../available/$1.sh active/$1.sh

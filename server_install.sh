@@ -94,21 +94,45 @@ moveResult() {
     fi
 }
 
+initiateDependencies() {
+    if [ $factsGethered = true ]; then
+        # Create docker image if it does not exist.
+        if ! [[ "${docker_images[@]}" =~ "${docker_image_name}" ]]; then
+            docker image build --target $docker_target -t $docker_image_name $docker_context
+        elif [[ "$quite" = false ]]; then
+            echo "Image $docker_image_name exists. Skip."
+        fi
+        # Create docker volume if it does not exist.
+        if ! [[ "${docker_volumes[@]}" =~ "${docker_volume_name}" ]]; then
+            docker volume create $docker_volume_name
+        elif [[ "$quite" = false ]]; then
+            echo "Volume $docker_volume_name exists. Skip."
+        fi
+        # Create docker network if it does not exist.
+        if ! [[ "${docker_networks[@]}" =~ "${docker_network_name}" ]]; then
+            docker network create --attachable -d overlay $docker_network_name
+        elif [[ "$quite" = false ]]; then
+            echo "Network $docker_network_name exists. Skip."
+        fi
+    else
+        echo "Facts were not gethered. Issues expected :)"
+    fi
+}
+
+# sudo docker image build --target base -t base_image .
+# sudo docker container create --name base-transfer --mount source=apache-exposed-volume,target=/mnt/apache-conf/ base_image
 # docker container create --name apache-docker --mount source=apache-configuration,target=/etc/httpd/conf.d/ apache_ds
-createDockerContainer() {
+createDockerService() {
     if [ -f "$docker_context/dockerfile" ]; then
-        docker image build --target $docker_target -t $docker_image_name $docker_context
-        docker volume create $docker_volume_name
-        docker network create --attachable $docker_network_name
         if $docker_container_exposed ; then
-            docker container create --rm \
+            docker service create \
                 --name $docker_container_name \
                 --mount source=$docker_volume_name,target=$docker_mount_point \
                 -p $docker_container_bind \
                 --network $docker_network_name \
                 $docker_image_name
         else
-            docker container create --rm \
+            docker service create \
                 --name $docker_container_name \
                 --mount source=$docker_volume_name,target=$docker_mount_point \
                 --network $docker_network_name \
@@ -119,18 +143,23 @@ createDockerContainer() {
     fi
 }
 
+# sudo docker container cp /tmp/apache-exposed/block_0_server.conf base-transfer:/mnt/apache-conf/block_0_server.conf
 copyToDockerVolume() {
-    if $verbose ; then
+    if [ $verbose = true ]; then
         echo "Copy files from $output_dir to docker container $docker_container_name:$docker_mount_point."
     fi
+    if ! [[ "${docker_images[@]}" =~ "base_image_ds" ]]; then
+        docker image build --target base -t base_image_ds $docker_context
+        base_container_created=true
+    fi
+    docker container create --name base_container_ds --mount source=$docker_volume_name,target=$docker_mount_point base_image_ds
     local conf_list=$(ls $output_dir)
     for file in $conf_list; do
-        docker container cp $output_dir$file $docker_container_name:$docker_mount_point$file
+        docker container cp $output_dir$file base_container_ds:$docker_mount_point$file
     done
-}
-
-dockerRun() {
-    docker container start $docker_container_name
+    if ! [[ "$base_container_created" = true ]]; then
+        docker container rm base_container_ds
+    fi
 }
 
 stopDocker() {
@@ -144,14 +173,20 @@ destroyDocker() {
     docker image rm $docker_image_name
 }
 
-getDockerStructure() {
+getherFacts() {
+    if [ "$verbose" = true ]; then
+        echo "Gether facts."
+    fi
     # Get docker images names.
-    docker_versions=$(docker images --format='{{json .Repository}}')
+    docker_images=$(docker images --format='{{json .Repository}}')
     # Get docker volumes names.
     docker_volumes=$(docker volume ls --format='{{json .Name}}')
     # Get docker networks names.
     docker_networks=$(docker network ls --format='{{json .Name}}')
-    echo -e "$docker_versions \n $docker_volumes \n $docker_networks"
+    if [ "$verbose" = true ]; then
+        echo -e "Images:\n${docker_images[@]}\nVolumes:\n$docker_volumes\nNetworks:\n$docker_networks"
+    fi
+    factsGethered=true
 }
 
 makeApacheConfig() {
@@ -170,7 +205,7 @@ executeScript() {
         # mod_ssl should be encluded if SSL is in use in json.
         case $exec_mode in
             test-apache-config)
-                if $verbose ; then
+                if [ $verbose = true ]; then
                     echo "Test mode."
                     makeApacheConfig "$config_file" testResult
                 else
@@ -178,7 +213,8 @@ executeScript() {
                 fi
                 ;;
             prerun)
-                getDockerStructure
+                getherFacts
+                initiateDependencies
                 ;;
             generate-apache-config)
                 makeApacheConfig "$config_file" moveResult
@@ -187,16 +223,12 @@ executeScript() {
                 copyToDockerVolume
                 ;;
             docker-init)
-                getDockerStructure
-                createDockerContainer
-                ;;
-            docker-run)
-                getDockerStructure
-                # Spmewhere here docker image should be checked defore run.
-                dockerRun
+                getherFacts
+                initiateDependencies
+                createDockerService
                 ;;
             docker-stop)
-                getDockerStructure
+                getherFacts
                 stopDocker
                 ;;
             docker-rm)
@@ -204,10 +236,10 @@ executeScript() {
                 ;;
             docker-full)
                 makeApacheConfig "$config_file" moveResult
-                # getDockerStructure
-                createDockerContainer
+                getherFacts
+                initiateDependencies
+                createDockerService
                 copyToDockerVolume
-                dockerRun
                 ;;
             general)
                 # Here should be docker installation implemented.
@@ -228,6 +260,8 @@ executeScript() {
 #########################
 tabs='    '
 from_file=true
+factsGethered=false
+quite=false
 
 ########################
 ### SCTIPT EXECUTION ###
@@ -254,9 +288,15 @@ while [ -n "$1" ]; do
             output_dir="$2"
             shift
             ;;
+        -q)
+            quite=true
+            shift
+            ;;
         -v)
             # Toggle verbose mode. Disabled by default.
             verbose=true
+            echo "Verbose active."
+            shift
             ;;
         *)
             echo "help?"
