@@ -20,6 +20,13 @@
             "comment": "affix 0.2 disable modules.",
             "content": ["ProxyErrorOverride"],
             "suffix": "off"
+        },
+        "affix_0_3":
+        {
+            "comment": "affix 0.3 generate 403 Forbidden error.",
+            "preffix": "RewriteRule",
+            "content": ["^/home", "^/admin"],
+            "suffix": "https://www.google.com/?RP-example [R=301,L]"
         }
     },
     "block_1":
@@ -41,8 +48,22 @@
         "affix_1_2": 
         {
             "comment": "Include optional files.",
-            "preffix": "IncludeOptional",
+            "preffix": "# IncludeOptional",
             "content": ["/some_file/path"]
+        },
+        "affix_1_3":
+        {
+            "comment": "Header to check exact that server.",
+            "preffix": "Header set",
+            "content": ["custom-header"],
+            "suffix": "true"
+        },
+        "affix_1_4":
+        {
+            "comment": "Logs placement.",
+            "preffix": "CustomLog",
+            "content": ["logs/two_access_log"],
+            "suffix": "combined"
         }
     },
     "block_2":

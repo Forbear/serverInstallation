@@ -1,0 +1,64 @@
+{
+    "block_0":
+    {
+        "preffix": "VirtualHost",
+        "content": "*:80",
+        "affix_0_0":
+        {
+            "comment": "affix 0.0 server name.",
+            "preffix": "ServerName",
+            "content": ["exposed.server"]
+        },
+        "affix_0_1":
+        {
+            "comment": "affix 0.1 set custom server header.",
+            "preffix": "Header append",
+            "content": ["Server"],
+            "suffix": "Exposed"
+        },
+        "affix_0_2":
+        {
+            "comment": "affix 0.2 enable modules.",
+            "content": ["RewriteEngine"],
+            "suffix": "on"
+        },
+        "affix_0_3":
+        {
+            "comment": "affix 0.3 Proxy to zero hiden server.",
+            "preffix": "RewriteRule",
+            "content": ["^/zero/"],
+            "suffix": "http://apache-hiden-zero/ [P]"
+        },
+        "affix_0_4":
+        {
+            "comment": "affix 0.4 Proxy to one hiden server.",
+            "preffix": "RewriteRule",
+            "content": ["^/one/"],
+            "suffix": "http://apache-hiden-one/ [P]"
+        },
+        "block_0_5":
+        {
+            "preffix": "LocationMatch",
+            "content": "^/one/.*",
+            "affix_0_5_0":
+            {
+                "comment": "affix 0.5.0.",
+                "preffix": "RequestHeader set",
+                "content": ["server"],
+                "suffix": "hiden.one"
+            }
+        },
+        "block_0_6":
+        {
+            "preffix": "LocationMatch",
+            "content": "^/zero/.*",
+            "affix_0_2_0":
+            {
+                "comment": "affix 0.6.0.",
+                "preffix": "RequestHeader set",
+                "content": ["server"],
+                "suffix": "hiden.zero"
+            }
+        }
+    }
+}

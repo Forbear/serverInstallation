@@ -1,0 +1,33 @@
+{
+    "block_0":
+    {
+        "preffix": "VirtualHost",
+        "content": "*:80",
+        "affix_0_0":
+        {
+            "comment": "affix 0.0 server name.",
+            "preffix": "ServerName",
+            "content": ["hiden.one"]
+        },
+        "affix_0_1":
+        {
+            "comment": "affix 0.1 set custom header.",
+            "preffix": "Header set",
+            "content": ["Application-Track"],
+            "suffix": "One"
+        },
+        "affix_0_2":
+        {
+            "comment": "affix 0.2 enable modules.",
+            "content": ["RewriteEngine"],
+            "suffix": "on"
+        },
+        "affix_0_3":
+        {
+            "comment": "Logs placement.",
+            "preffix": "CustomLog",
+            "content": ["logs/one_access_log"],
+            "suffix": "combined"
+        }
+    }
+}

@@ -1,0 +1,1 @@
+rm active/$1.sh
