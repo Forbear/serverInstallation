@@ -119,23 +119,22 @@ initiateDependencies() {
     fi
 }
 
-# sudo docker image build --target base -t base_image .
-# sudo docker container create --name base-transfer --mount source=apache-exposed-volume,target=/mnt/apache-conf/ base_image
-# docker container create --name apache-docker --mount source=apache-configuration,target=/etc/httpd/conf.d/ apache_ds
 createDockerService() {
     if [ -f "$docker_context/dockerfile" ]; then
-        if $docker_container_exposed ; then
+        if $docker_service_exposed ; then
             docker service create \
                 --name $docker_container_name \
                 --mount source=$docker_volume_name,target=$docker_mount_point \
                 -p $docker_container_bind \
                 --network $docker_network_name \
+                --replicas $docker_service_replicas \
                 $docker_image_name
         else
             docker service create \
                 --name $docker_container_name \
                 --mount source=$docker_volume_name,target=$docker_mount_point \
                 --network $docker_network_name \
+                --replicas $docker_service_replicas \
                 $docker_image_name
         fi
     else
@@ -143,9 +142,6 @@ createDockerService() {
     fi
 }
 
-# sudo docker image build --target base -t base_image_ds .
-# sudo docker container cp /tmp/apache-exposed/block_0_server.conf base-transfer:/mnt/apache-conf/block_0_server.conf
-# sudo docker container create --name base_container_ds --mount source=apache-exposed-volume,target=/mnt/volume/ base_image_ds
 copyToDockerVolume() {
     local base_image_created=false
     local base_container_created=false
