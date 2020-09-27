@@ -9,5 +9,6 @@ docker_container_bind='80:80'
 docker_container_name='apache-exposed'
 docker_image_name='apache_ds'
 docker_context='.'
-docker_container_exposed=true
+docker_service_exposed=true
 docker_target='proxy_point'
+docker_service_replicas=1

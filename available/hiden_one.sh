@@ -8,5 +8,6 @@ docker_network_name='apache-rp-network'
 docker_container_name='apache-hiden-one'
 docker_image_name='apache_hiden_ds'
 docker_context='.'
-docker_container_exposed=false
+docker_service_exposed=false
 docker_target='hiden_point'
+docker_service_replicas=1
