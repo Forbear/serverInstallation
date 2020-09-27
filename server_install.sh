@@ -143,21 +143,30 @@ createDockerService() {
     fi
 }
 
+# sudo docker image build --target base -t base_image_ds .
 # sudo docker container cp /tmp/apache-exposed/block_0_server.conf base-transfer:/mnt/apache-conf/block_0_server.conf
+# sudo docker container create --name base_container_ds --mount source=apache-exposed-volume,target=/mnt/volume/ base_image_ds
 copyToDockerVolume() {
-    if [ $verbose = true ]; then
+    local base_image_created=false
+    local base_container_created=false
+    if [ "$verbose" = true ]; then
         echo "Copy files from $output_dir to docker container $docker_container_name:$docker_mount_point."
     fi
     if ! [[ "${docker_images[@]}" =~ "base_image_ds" ]]; then
         docker image build --target base -t base_image_ds $docker_context
+        base_image_created=true
+    else
+        base_image_created=true
+    fi
+    if [[ "$base_image_created" = true ]]; then
+        docker container create --name base_container_ds --mount source=$docker_volume_name,target=$docker_mount_point base_image_ds
         base_container_created=true
     fi
-    docker container create --name base_container_ds --mount source=$docker_volume_name,target=$docker_mount_point base_image_ds
     local conf_list=$(ls $output_dir)
     for file in $conf_list; do
         docker container cp $output_dir$file base_container_ds:$docker_mount_point$file
     done
-    if ! [[ "$base_container_created" = true ]]; then
+    if [[ "$base_container_created" = true ]]; then
         docker container rm base_container_ds
     fi
 }
@@ -205,7 +214,7 @@ executeScript() {
         # mod_ssl should be encluded if SSL is in use in json.
         case $exec_mode in
             test-apache-config)
-                if [ $verbose = true ]; then
+                if [ "$verbose" = true ]; then
                     echo "Test mode."
                     makeApacheConfig "$config_file" testResult
                 else
@@ -238,8 +247,8 @@ executeScript() {
                 makeApacheConfig "$config_file" moveResult
                 getherFacts
                 initiateDependencies
-                createDockerService
                 copyToDockerVolume
+                createDockerService
                 ;;
             general)
                 # Here should be docker installation implemented.
@@ -295,7 +304,6 @@ while [ -n "$1" ]; do
         -v)
             # Toggle verbose mode. Disabled by default.
             verbose=true
-            echo "Verbose active."
             shift
             ;;
         *)

@@ -21,4 +21,4 @@ CMD ["/usr/sbin/httpd", "-D", "FOREGROUND"]
 
 FROM scratch as base
 LABEL maintainer="Daniil Silniahin"
-CMD echo "Base."
+CMD ["NULL"]
