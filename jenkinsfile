@@ -1,0 +1,26 @@
+pipeline {
+    agent any
+    environment {
+        isDockerUp = """${sh(
+            returnStdout: true,
+            script: 'sudo systemctl status docker | grep -q "Active: active" && echo "true" || echo "false"'
+        )}"""
+    }
+    stages {
+        stage('Docker.') {
+            when {
+                expression {
+                    env.isDockerUp == 'true'
+                }
+            }
+            steps {
+                sh 'echo "Docker is active."'
+            }
+        }
+        stage('Final.') {
+            steps {
+                sh 'echo "End."'
+            }
+        }
+    }
+}
