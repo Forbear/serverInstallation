@@ -155,7 +155,9 @@ copyToDockerVolume() {
         base_image_created=true
     fi
     if [[ "$base_image_created" = true ]]; then
-        docker container create --name base_container_ds --mount source=$docker_volume_name,target=$docker_mount_point base_image_ds
+        docker container create --name base_container_ds \
+            --mount source=$docker_volume_name,target=$docker_mount_point \
+            base_image_ds
         base_container_created=true
     fi
     local conf_list=$(ls $output_dir)
@@ -167,10 +169,12 @@ copyToDockerVolume() {
     fi
 }
 
+# Out of date.
 stopDocker() {
     docker container stop $docker_container_name
 }
 
+# Out of date function. Should be changed.
 destroyDocker() {
     stopDocker
     docker container rm $docker_container_name
@@ -194,35 +198,42 @@ getherFacts() {
     factsGethered=true
 }
 
-makeApacheConfig() {
-    servers=$(jq -r '. | keys | .[]' $1)
-    for i in $servers; do
-        local config=$(jq -c ".$i" $1)
-        local temp_file=$(mktemp)
+makeConfig() {
+    case $1 in
+        # Jenerate config from JSON file.
+        *.json)
+            servers=$(jq -r '. | keys | .[]' $1)
+            for i in $servers; do
+                local config=$(jq -c ".$i" $1)
+                local temp_file=$(mktemp)
 
-        blockInsert "$config" ""
-        $2
-    done
+                blockInsert "$config" ""
+                $2
+            done
+            ;;
+        *)
+            echo "Specified config file extention is not supported."
+    esac
 }
 
 executeScript() {
     if [ -f $config_file ]; then
         # mod_ssl should be encluded if SSL is in use in json.
         case $exec_mode in
-            test-apache-config)
+            test-config)
                 if [ "$verbose" = true ]; then
                     echo "Test mode."
-                    makeApacheConfig "$config_file" testResult
+                    makeConfig "$config_file" testResult
                 else
-                    makeApacheConfig "$config_file" no_result
+                    makeConfig "$config_file" no_result
                 fi
                 ;;
             prerun)
                 getherFacts
                 initiateDependencies
                 ;;
-            generate-apache-config)
-                makeApacheConfig "$config_file" moveResult
+            generate-config)
+                makeConfig "$config_file" moveResult
                 ;;
             cp-config)
                 copyToDockerVolume
@@ -234,13 +245,15 @@ executeScript() {
                 ;;
             docker-stop)
                 getherFacts
-                stopDocker
+                # Out of date.
+                # stopDocker
                 ;;
             docker-rm)
-                destroyDocker
+                # Out of date.
+                # destroyDocker
                 ;;
             docker-full)
-                makeApacheConfig "$config_file" moveResult
+                makeConfig "$config_file" moveResult
                 getherFacts
                 initiateDependencies
                 copyToDockerVolume
@@ -250,7 +263,7 @@ executeScript() {
                 # Here should be docker installation implemented.
                 specifyPackageManager
                 sudo $packageManager install -y -q jq
-                makeApacheConfig "$config_file" moveResult
+                makeConfig "$config_file" moveResult
                 ;;
             *)
                 echo "Unexpected execute mode was selected. Error."
@@ -275,8 +288,13 @@ quite=false
 # Parameters parsing
 while [ -n "$1" ]; do
     case $1 in
+        -c)
+            config_file="$2"
+            shift
+            ;;
         -j)
             from_file=false
+            shift
             ;;
         -f)
             variables_init="$2"
@@ -323,6 +341,8 @@ if  $from_file ; then
     fi
 else
     # Was not tested.
-    # executeScript
     echo 'Manual variables input.'
+    # Example.
+    # ./server_install.sh -j -m docker-full -c configs/default_config.json
+    executeScript
 fi
