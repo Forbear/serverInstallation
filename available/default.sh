@@ -1,8 +1,7 @@
 #! /bin/bash/
-exec_mode=docker-full
+exec_mode=test-config
 config_file='configs/default_config.json'
 output_dir='/tmp/apache-rp-conf/'
-verbose=false
 docker_mount_point='/etc/httpd/conf.d/'
 docker_volume_name='apache-configuration'
 docker_container_bind='8080:80'
