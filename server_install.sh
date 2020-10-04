@@ -328,7 +328,7 @@ while [ -n "$1" ]; do
 done
 
 if  $from_file ; then
-    activeList=$(ls active/)
+    activeList=$(ls active/ | grep .sh)
     if [[ "${#activeList[@]}" > 0 ]]; then
         for set in ${activeList[@]}; do
             # Import defined variables.
@@ -344,5 +344,5 @@ else
     echo 'Manual variables input.'
     # Example.
     # ./server_install.sh -j -m docker-build -c configs/default_config.json
-    executeScript
+    # executeScript
 fi
