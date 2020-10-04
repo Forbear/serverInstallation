@@ -123,7 +123,7 @@ createDockerService() {
     if [ -f "$docker_context/dockerfile" ]; then
         if $docker_service_exposed ; then
             sudo docker service create \
-                --name $docker_container_name \
+                --name $docker_service_name \
                 --mount source=$docker_volume_name,target=$docker_mount_point \
                 -p $docker_container_bind \
                 --network $docker_network_name \
@@ -131,7 +131,7 @@ createDockerService() {
                 $docker_image_name
         else
             sudo docker service create \
-                --name $docker_container_name \
+                --name $docker_service_name \
                 --mount source=$docker_volume_name,target=$docker_mount_point \
                 --network $docker_network_name \
                 --replicas $docker_service_replicas \
@@ -146,7 +146,7 @@ copyToDockerVolume() {
     local base_image_created=false
     local base_container_created=false
     if [ "$verbose" = true ]; then
-        echo "Copy files from $output_dir to docker container $docker_container_name:$docker_mount_point."
+        echo "Copy files from $output_dir to docker container $docker_service_name:$docker_mount_point."
     fi
     if ! [[ "${docker_images[@]}" =~ "base_image_ds" ]]; then
         sudo docker image build --target base -t base_image_ds $docker_context
@@ -169,15 +169,18 @@ copyToDockerVolume() {
     fi
 }
 
-# Out of date.
-stopDocker() {
-    sudo docker container stop $docker_container_name
+stopDockerService() {
+    sudo docker service rm $docker_service_name
 }
 
 # Out of date function. Should be changed.
 destroyDocker() {
-    stopDocker
-    sudo docker container rm $docker_container_name
+    stopDockerService
+    echo "10s service termanate wait."
+    sleep 10
+    # Block below should be executed only if those
+    # dependencies are not in use!!!
+    sudo docker network rm $docker_network_name
     sudo docker volume rm $docker_volume_name
     sudo docker image rm $docker_image_name
 }
@@ -245,8 +248,7 @@ executeScript() {
                 ;;
             docker-stop)
                 getherFacts
-                # Out of date.
-                # stopDocker
+                stopDockerService
                 ;;
             docker-rm)
                 # Out of date.

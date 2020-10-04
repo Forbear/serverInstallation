@@ -9,7 +9,7 @@ pipeline {
     parameters {
         choice(
             name: 'ACTIVITY',
-            choices: ["None", "docker-build", "Destroy"],
+            choices: ["None", "docker-build", "docker-stop"],
             description: 'Activity to perform.')
         choice(
             name: 'UPDATE_CHECKBOXES',
@@ -31,10 +31,10 @@ pipeline {
                 sh "$WORKSPACE/jenkins/updateCheckBoxes.sh"
             }
         }
-        stage('Docker build.') {
+        stage('Execute docker service chosen activity.') {
             when {
                 expression {
-                    env.isDockerUp == 'true' && params.ACTIVITY == 'docker-build'
+                    env.isDockerUp == 'true' && params.ACTIVITY != 'None'
                 }
             }
             steps {
@@ -43,18 +43,8 @@ pipeline {
                     for (config in configs) {
                         sh "./enable.sh ${config}"
                     }
-                    sh "./server_install.sh"
+                    sh "./server_install.sh -m ${params.ACTIVITY}"
                 }
-            }
-        }
-        stage('Docker destroy.') {
-            when {
-                expression {
-                    env.isDockerUp == 'true' && params.ACTIVITY == 'Destroy'
-                }
-            }
-            steps {
-                echo "End."
             }
         }
         stage('Clean up.') {
