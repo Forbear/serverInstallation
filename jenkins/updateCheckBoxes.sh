@@ -1,9 +1,9 @@
 #! /bin/bash
 
-available_files=$(ls ../available/)
-file_name="checkboxes.yaml"
+available_files=$(ls ./available/)
+file_name="./jenkins/checkboxes.yaml"
 
-echo 'CheckboxParameter:' > checkboxes.yaml.bak
+echo 'CheckboxParameter:' > $file_name
 for file in $available_files; do
-    echo -e "  - key: $file\n    value: $file" >> checkboxes.yaml.bak
+    echo -e "  - key: $file\n    value: $file" >> $file_name
 done
