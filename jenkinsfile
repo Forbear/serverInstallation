@@ -48,6 +48,11 @@ pipeline {
             }
         }
         stage('Clean up.') {
+            when {
+                expression {
+                    params.ACTIVITY != 'None'
+                }
+            }
             steps {
                 script {
                     def configs = params.AVAILABLE_CONFIGURATION.split(',')
