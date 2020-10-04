@@ -19,8 +19,7 @@ installJenkins() {
     esac
 }
 
-
 installJenkins
 sudo cat /var/lib/jenkins/secrets/initialAdminPassword
 # modify /etc/sudoers to allow jenkins to use docker and systemctl for docker
-# jenkins ALL=NOPASSWD:/usr/bin/docker, /bin/systemctl start docker, /bin/systemctl status docker
+# jenkins ALL=NOPASSWD:/usr/bin/docker, /bin/systemctl start docker, /bin/systemctl is-active docker

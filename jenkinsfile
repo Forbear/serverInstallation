@@ -3,23 +3,34 @@ pipeline {
     environment {
         isDockerUp = """${sh(
             returnStdout: true,
-            script: 'sudo systemctl status docker | grep -q "Active: active" && echo "true" || echo "false"'
+            script: 'sudo systemctl is-active docker | grep -q "inactive" && echo -n "false" || echo -n "true"'
         )}"""
     }
+    parameters {
+        choice(
+            name: 'ACTIVITY',
+            choices: ["None", "Build", "Destroy"],
+            description: 'Activity to perform.')
+    }
     stages {
-        stage('Docker.') {
+        stage('Docker build.') {
             when {
                 expression {
-                    env.isDockerUp == 'true'
+                    env.isDockerUp == 'true' && params.ACTIVITY == 'Build'
                 }
             }
             steps {
-                sh 'echo "Docker is active."'
+                sh './serverInstall.sh'
             }
         }
-        stage('Final.') {
+        stage('Docker destroy.') {
+            when {
+                expression {
+                    env.isDockerUp == 'true' && params.ACTIVITY == 'Destroy'
+                }
+            }
             steps {
-                sh 'echo "End."'
+                echo "End."
             }
         }
     }
