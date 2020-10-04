@@ -39,6 +39,12 @@ pipeline {
             }
             steps {
                 echo "${params.AVAILABLE_CONFIGURATION}"
+                sh """
+                for config in ${params.AVAILABLE_CONFIGURATION}; do
+                    ./enable.sh $config
+                done
+                ls -l ./active/
+                """
                 // sh "$WORKSPACE/server_install.sh -m ${params.ACTIVITY}"
             }
         }
