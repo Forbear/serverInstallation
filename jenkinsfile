@@ -11,6 +11,11 @@ pipeline {
             name: 'ACTIVITY',
             choices: ["None", "Build", "Destroy"],
             description: 'Activity to perform.')
+        checkboxParameter(
+            name:'my-checkbox',
+            format:'JSON',
+            uri:'https://raw.githubusercontent.com/sunweisheng/Jenkins/master/examples/example.json'
+        )
     }
     stages {
         stage('Docker build.') {
