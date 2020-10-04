@@ -1,1 +1,3 @@
-ln -s ../available/$1.sh active/$1.sh
+#! /bin/bash
+
+ls available/ | grep -q $1 && ln -s ../available/$1 active/$1

@@ -1,0 +1,66 @@
+pipeline {
+    agent any
+    environment {
+        isDockerUp = """${sh(
+            returnStdout: true,
+            script: 'sudo systemctl is-active docker | grep -q "inactive" && echo -n "false" || echo -n "true"'
+        )}"""
+    }
+    parameters {
+        choice(
+            name: 'ACTIVITY',
+            choices: ["None", "docker-build", "docker-stop"],
+            description: 'Activity to perform.')
+        choice(
+            name: 'UPDATE_CHECKBOXES',
+            choices: ["Yes", "No"],
+            description: 'Update checkboxes with available configuration.')
+        checkboxParameter(
+            name: 'AVAILABLE_CONFIGURATION',
+            format: 'YAML',
+            protocol: 'FILE_PATH',
+            uri: "/var/lib/jenkins/workspace/${env.JOB_BASE_NAME}/jenkins/checkboxes.yaml"
+        )
+    }
+    stages {
+        stage('Update available checkboxes.') {
+            when {
+                expression { params.UPDATE_CHECKBOXES == 'Yes' }
+            }
+            steps {
+                sh "$WORKSPACE/jenkins/updateCheckBoxes.sh"
+            }
+        }
+        stage('Execute docker service chosen activity.') {
+            when {
+                expression {
+                    env.isDockerUp == 'true' && params.ACTIVITY != 'None'
+                }
+            }
+            steps {
+                script {
+                    def configs = params.AVAILABLE_CONFIGURATION.split(',')
+                    for (config in configs) {
+                        sh "./enable.sh ${config}"
+                    }
+                    sh "./server_install.sh -m ${params.ACTIVITY}"
+                }
+            }
+        }
+        stage('Clean up.') {
+            when {
+                expression {
+                    params.ACTIVITY != 'None'
+                }
+            }
+            steps {
+                script {
+                    def configs = params.AVAILABLE_CONFIGURATION.split(',')
+                    for (config in configs) {
+                        sh "./disable.sh ${config}"
+                    }
+                }
+            }
+        }
+    }
+}

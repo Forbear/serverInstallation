@@ -98,20 +98,20 @@ initiateDependencies() {
     if [ $factsGethered = true ]; then
         # Create docker image if it does not exist.
         if ! [[ "${docker_images[@]}" =~ "${docker_image_name}" ]]; then
-            docker image build --target $docker_target -t $docker_image_name $docker_context
-        elif [[ "$quite" = false ]]; then
+            sudo docker image build --target $docker_target -t $docker_image_name $docker_context
+        elif [[ "$quiet" = false ]]; then
             echo "Image $docker_image_name exists. Skip."
         fi
         # Create docker volume if it does not exist.
         if ! [[ "${docker_volumes[@]}" =~ "${docker_volume_name}" ]]; then
-            docker volume create $docker_volume_name
-        elif [[ "$quite" = false ]]; then
+            sudo docker volume create $docker_volume_name
+        elif [[ "$quiet" = false ]]; then
             echo "Volume $docker_volume_name exists. Skip."
         fi
         # Create docker network if it does not exist.
         if ! [[ "${docker_networks[@]}" =~ "${docker_network_name}" ]]; then
-            docker network create --attachable -d overlay $docker_network_name
-        elif [[ "$quite" = false ]]; then
+            sudo docker network create --attachable -d overlay $docker_network_name
+        elif [[ "$quiet" = false ]]; then
             echo "Network $docker_network_name exists. Skip."
         fi
     else
@@ -122,16 +122,16 @@ initiateDependencies() {
 createDockerService() {
     if [ -f "$docker_context/dockerfile" ]; then
         if $docker_service_exposed ; then
-            docker service create \
-                --name $docker_container_name \
+            sudo docker service create -q \
+                --name $docker_service_name \
                 --mount source=$docker_volume_name,target=$docker_mount_point \
                 -p $docker_container_bind \
                 --network $docker_network_name \
                 --replicas $docker_service_replicas \
                 $docker_image_name
         else
-            docker service create \
-                --name $docker_container_name \
+            sudo docker service create -q \
+                --name $docker_service_name \
                 --mount source=$docker_volume_name,target=$docker_mount_point \
                 --network $docker_network_name \
                 --replicas $docker_service_replicas \
@@ -146,40 +146,43 @@ copyToDockerVolume() {
     local base_image_created=false
     local base_container_created=false
     if [ "$verbose" = true ]; then
-        echo "Copy files from $output_dir to docker container $docker_container_name:$docker_mount_point."
+        echo "Copy files from $output_dir to docker container $docker_service_name:$docker_mount_point."
     fi
     if ! [[ "${docker_images[@]}" =~ "base_image_ds" ]]; then
-        docker image build --target base -t base_image_ds $docker_context
+        sudo docker image build --target base -t base_image_ds $docker_context
         base_image_created=true
     else
         base_image_created=true
     fi
     if [[ "$base_image_created" = true ]]; then
-        docker container create --name base_container_ds \
+        sudo docker container create --name base_container_ds \
             --mount source=$docker_volume_name,target=$docker_mount_point \
             base_image_ds
         base_container_created=true
     fi
     local conf_list=$(ls $output_dir)
     for file in $conf_list; do
-        docker container cp $output_dir$file base_container_ds:$docker_mount_point$file
+        sudo docker container cp $output_dir$file base_container_ds:$docker_mount_point$file
     done
     if [[ "$base_container_created" = true ]]; then
-        docker container rm base_container_ds
+        sudo docker container rm base_container_ds
     fi
 }
 
-# Out of date.
-stopDocker() {
-    docker container stop $docker_container_name
+stopDockerService() {
+    sudo docker service rm $docker_service_name
 }
 
 # Out of date function. Should be changed.
 destroyDocker() {
-    stopDocker
-    docker container rm $docker_container_name
-    docker volume rm $docker_volume_name
-    docker image rm $docker_image_name
+    stopDockerService
+    echo "10s service termanate wait."
+    sleep 10
+    # Block below should be executed only if those
+    # dependencies are not in use!!!
+    sudo docker network rm $docker_network_name
+    sudo docker volume rm $docker_volume_name
+    sudo docker image rm $docker_image_name
 }
 
 getherFacts() {
@@ -187,11 +190,11 @@ getherFacts() {
         echo "Gether facts."
     fi
     # Get docker images names.
-    docker_images=$(docker images --format='{{json .Repository}}')
+    docker_images=$(sudo docker images --format='{{json .Repository}}')
     # Get docker volumes names.
-    docker_volumes=$(docker volume ls --format='{{json .Name}}')
+    docker_volumes=$(sudo docker volume ls --format='{{json .Name}}')
     # Get docker networks names.
-    docker_networks=$(docker network ls --format='{{json .Name}}')
+    docker_networks=$(sudo docker network ls --format='{{json .Name}}')
     if [ "$verbose" = true ]; then
         echo -e "Images:\n${docker_images[@]}\nVolumes:\n$docker_volumes\nNetworks:\n$docker_networks"
     fi
@@ -245,14 +248,13 @@ executeScript() {
                 ;;
             docker-stop)
                 getherFacts
-                # Out of date.
-                # stopDocker
+                stopDockerService
                 ;;
             docker-rm)
                 # Out of date.
                 # destroyDocker
                 ;;
-            docker-full)
+            docker-build)
                 makeConfig "$config_file" moveResult
                 getherFacts
                 initiateDependencies
@@ -279,7 +281,7 @@ executeScript() {
 tabs='    '
 from_file=true
 factsGethered=false
-quite=false
+quiet=false
 
 ########################
 ### SCTIPT EXECUTION ###
@@ -312,7 +314,7 @@ while [ -n "$1" ]; do
             shift
             ;;
         -q)
-            quite=true
+            quiet=true
             shift
             ;;
         -v)
@@ -328,7 +330,7 @@ while [ -n "$1" ]; do
 done
 
 if  $from_file ; then
-    activeList=$(ls active/)
+    activeList=$(ls active/ | grep .sh)
     if [[ "${#activeList[@]}" > 0 ]]; then
         for set in ${activeList[@]}; do
             # Import defined variables.
@@ -343,6 +345,6 @@ else
     # Was not tested.
     echo 'Manual variables input.'
     # Example.
-    # ./server_install.sh -j -m docker-full -c configs/default_config.json
-    executeScript
+    # ./server_install.sh -j -m docker-build -c configs/default_config.json
+    # executeScript
 fi
