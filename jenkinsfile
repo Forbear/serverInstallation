@@ -20,7 +20,7 @@ pipeline {
                 }
             }
             steps {
-                sh '$WORKSPACE/serverInstall.sh'
+                sh '$WORKSPACE/server_install.sh'
             }
         }
         stage('Docker destroy.') {
