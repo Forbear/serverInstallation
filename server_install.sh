@@ -99,19 +99,19 @@ initiateDependencies() {
         # Create docker image if it does not exist.
         if ! [[ "${docker_images[@]}" =~ "${docker_image_name}" ]]; then
             sudo docker image build --target $docker_target -t $docker_image_name $docker_context
-        elif [[ "$quite" = false ]]; then
+        elif [[ "$quiet" = false ]]; then
             echo "Image $docker_image_name exists. Skip."
         fi
         # Create docker volume if it does not exist.
         if ! [[ "${docker_volumes[@]}" =~ "${docker_volume_name}" ]]; then
             sudo docker volume create $docker_volume_name
-        elif [[ "$quite" = false ]]; then
+        elif [[ "$quiet" = false ]]; then
             echo "Volume $docker_volume_name exists. Skip."
         fi
         # Create docker network if it does not exist.
         if ! [[ "${docker_networks[@]}" =~ "${docker_network_name}" ]]; then
             sudo docker network create --attachable -d overlay $docker_network_name
-        elif [[ "$quite" = false ]]; then
+        elif [[ "$quiet" = false ]]; then
             echo "Network $docker_network_name exists. Skip."
         fi
     else
@@ -122,7 +122,7 @@ initiateDependencies() {
 createDockerService() {
     if [ -f "$docker_context/dockerfile" ]; then
         if $docker_service_exposed ; then
-            sudo docker service create \
+            sudo docker service create -q \
                 --name $docker_service_name \
                 --mount source=$docker_volume_name,target=$docker_mount_point \
                 -p $docker_container_bind \
@@ -130,7 +130,7 @@ createDockerService() {
                 --replicas $docker_service_replicas \
                 $docker_image_name
         else
-            sudo docker service create \
+            sudo docker service create -q \
                 --name $docker_service_name \
                 --mount source=$docker_volume_name,target=$docker_mount_point \
                 --network $docker_network_name \
@@ -281,7 +281,7 @@ executeScript() {
 tabs='    '
 from_file=true
 factsGethered=false
-quite=false
+quiet=false
 
 ########################
 ### SCTIPT EXECUTION ###
@@ -314,7 +314,7 @@ while [ -n "$1" ]; do
             shift
             ;;
         -q)
-            quite=true
+            quiet=true
             shift
             ;;
         -v)
