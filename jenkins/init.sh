@@ -21,5 +21,6 @@ installJenkins() {
 
 installJenkins
 sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+# Custom Checkbox Parameter - plugin
 # modify /etc/sudoers to allow jenkins to use docker and systemctl for docker
 # jenkins ALL=NOPASSWD:/usr/bin/docker, /bin/systemctl start docker, /bin/systemctl is-active docker

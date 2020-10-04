@@ -11,14 +11,31 @@ pipeline {
             name: 'ACTIVITY',
             choices: ["None", "Build", "Destroy"],
             description: 'Activity to perform.')
+        choice(
+            name: 'UPDATE_CHECKBOXES',
+            choices: ["Yes", "No"],
+            description: 'Update checkboxes with available configuration.')
         checkboxParameter(
-            name: 'my-checkbox',
-            format: 'JSON',
+            name: 'AVAILABLE_CONFIGURATION',
+            format: 'YAML',
             protocol: 'FILE_PATH',
-            uri: "./jenkins/checkboxes.json"
+            uri: "/var/lib/jenkins/workspace/${env.JOB_BASE_NAME}/jenkins/checkboxes.yaml"
         )
     }
     stages {
+        stage('Update available checkboxes.') {
+            when {
+                expression { params.UPDATE_CHECKBOXES == 'Yes' }
+            }
+            steps {
+                sh "$WORKSPACE/jenkins/updateCheckBoxes.sh"
+            }
+        }
+        stage('Activate selected configs.') {
+            steps {
+                echo "${params.AVAILABLE_CONFIGURATION}"
+            }
+        }
         stage('Docker build.') {
             when {
                 expression {
@@ -26,7 +43,7 @@ pipeline {
                 }
             }
             steps {
-                sh '$WORKSPACE/server_install.sh'
+                sh "$WORKSPACE/server_install.sh"
             }
         }
         stage('Docker destroy.') {
@@ -37,6 +54,11 @@ pipeline {
             }
             steps {
                 echo "End."
+            }
+        }
+        stage('Clean up.') {
+            steps {
+                sh "rm ./active/*.sh"
             }
         }
     }
