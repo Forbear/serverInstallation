@@ -1,5 +1,5 @@
 #! /bin/bash/
-exec_mode=docker-full
+exec_mode=docker-build
 config_file='configs/hiden_zero_config.json'
 output_dir='/tmp/apache-hiden-zero/'
 docker_mount_point='/etc/httpd/conf.d/'

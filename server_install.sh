@@ -252,7 +252,7 @@ executeScript() {
                 # Out of date.
                 # destroyDocker
                 ;;
-            docker-full)
+            docker-build)
                 makeConfig "$config_file" moveResult
                 getherFacts
                 initiateDependencies
@@ -343,6 +343,6 @@ else
     # Was not tested.
     echo 'Manual variables input.'
     # Example.
-    # ./server_install.sh -j -m docker-full -c configs/default_config.json
+    # ./server_install.sh -j -m docker-build -c configs/default_config.json
     executeScript
 fi
