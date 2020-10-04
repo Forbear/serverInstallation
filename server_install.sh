@@ -98,19 +98,19 @@ initiateDependencies() {
     if [ $factsGethered = true ]; then
         # Create docker image if it does not exist.
         if ! [[ "${docker_images[@]}" =~ "${docker_image_name}" ]]; then
-            docker image build --target $docker_target -t $docker_image_name $docker_context
+            sudo docker image build --target $docker_target -t $docker_image_name $docker_context
         elif [[ "$quite" = false ]]; then
             echo "Image $docker_image_name exists. Skip."
         fi
         # Create docker volume if it does not exist.
         if ! [[ "${docker_volumes[@]}" =~ "${docker_volume_name}" ]]; then
-            docker volume create $docker_volume_name
+            sudo docker volume create $docker_volume_name
         elif [[ "$quite" = false ]]; then
             echo "Volume $docker_volume_name exists. Skip."
         fi
         # Create docker network if it does not exist.
         if ! [[ "${docker_networks[@]}" =~ "${docker_network_name}" ]]; then
-            docker network create --attachable -d overlay $docker_network_name
+            sudo docker network create --attachable -d overlay $docker_network_name
         elif [[ "$quite" = false ]]; then
             echo "Network $docker_network_name exists. Skip."
         fi
@@ -122,7 +122,7 @@ initiateDependencies() {
 createDockerService() {
     if [ -f "$docker_context/dockerfile" ]; then
         if $docker_service_exposed ; then
-            docker service create \
+            sudo docker service create \
                 --name $docker_container_name \
                 --mount source=$docker_volume_name,target=$docker_mount_point \
                 -p $docker_container_bind \
@@ -130,7 +130,7 @@ createDockerService() {
                 --replicas $docker_service_replicas \
                 $docker_image_name
         else
-            docker service create \
+            sudo docker service create \
                 --name $docker_container_name \
                 --mount source=$docker_volume_name,target=$docker_mount_point \
                 --network $docker_network_name \
@@ -149,37 +149,37 @@ copyToDockerVolume() {
         echo "Copy files from $output_dir to docker container $docker_container_name:$docker_mount_point."
     fi
     if ! [[ "${docker_images[@]}" =~ "base_image_ds" ]]; then
-        docker image build --target base -t base_image_ds $docker_context
+        sudo docker image build --target base -t base_image_ds $docker_context
         base_image_created=true
     else
         base_image_created=true
     fi
     if [[ "$base_image_created" = true ]]; then
-        docker container create --name base_container_ds \
+        sudo docker container create --name base_container_ds \
             --mount source=$docker_volume_name,target=$docker_mount_point \
             base_image_ds
         base_container_created=true
     fi
     local conf_list=$(ls $output_dir)
     for file in $conf_list; do
-        docker container cp $output_dir$file base_container_ds:$docker_mount_point$file
+        sudo docker container cp $output_dir$file base_container_ds:$docker_mount_point$file
     done
     if [[ "$base_container_created" = true ]]; then
-        docker container rm base_container_ds
+        sudo docker container rm base_container_ds
     fi
 }
 
 # Out of date.
 stopDocker() {
-    docker container stop $docker_container_name
+    sudo docker container stop $docker_container_name
 }
 
 # Out of date function. Should be changed.
 destroyDocker() {
     stopDocker
-    docker container rm $docker_container_name
-    docker volume rm $docker_volume_name
-    docker image rm $docker_image_name
+    sudo docker container rm $docker_container_name
+    sudo docker volume rm $docker_volume_name
+    sudo docker image rm $docker_image_name
 }
 
 getherFacts() {
@@ -187,11 +187,11 @@ getherFacts() {
         echo "Gether facts."
     fi
     # Get docker images names.
-    docker_images=$(docker images --format='{{json .Repository}}')
+    docker_images=$(sudo docker images --format='{{json .Repository}}')
     # Get docker volumes names.
-    docker_volumes=$(docker volume ls --format='{{json .Name}}')
+    docker_volumes=$(sudo docker volume ls --format='{{json .Name}}')
     # Get docker networks names.
-    docker_networks=$(docker network ls --format='{{json .Name}}')
+    docker_networks=$(sudo docker network ls --format='{{json .Name}}')
     if [ "$verbose" = true ]; then
         echo -e "Images:\n${docker_images[@]}\nVolumes:\n$docker_volumes\nNetworks:\n$docker_networks"
     fi
