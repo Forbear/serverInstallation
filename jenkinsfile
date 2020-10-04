@@ -15,7 +15,7 @@ pipeline {
             name: 'my-checkbox',
             format: 'JSON',
             protocol: 'FILE_PATH',
-            uri: 'jenkins/checkboxes.json'
+            uri: "$WORKSPACE/jenkins/checkboxes.json"
         )
     }
     stages {
