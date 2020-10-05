@@ -9,7 +9,7 @@ pipeline {
     parameters {
         choice(
             name: 'ACTIVITY',
-            choices: ["None", "docker-build", "docker-stop"],
+            choices: ["None", "docker-build", "docker-stop", "docker-update-replicas"],
             description: 'Activity to perform.')
         choice(
             name: 'UPDATE_CHECKBOXES',
@@ -21,20 +21,23 @@ pipeline {
             protocol: 'FILE_PATH',
             uri: "/var/lib/jenkins/workspace/${env.JOB_BASE_NAME}/jenkins/checkboxes.yaml"
         )
+        checkboxParameter(
+            name: 'AVAILABLE_SERVICES',
+            format: 'YAML',
+            protocol: 'FILE_PATH',
+            uri: "/var/lib/jenkins/workspace/${env.JOB_BASE_NAME}/jenkins/services.yaml"
+        )
+        text(
+            name: 'REPLICAS',
+            defaultValue: '1',
+            description: 'Number of replicas for selected service.'
+        )
     }
     stages {
-        stage('Update available checkboxes.') {
-            when {
-                expression { params.UPDATE_CHECKBOXES == 'Yes' }
-            }
-            steps {
-                sh "$WORKSPACE/jenkins/updateCheckBoxes.sh"
-            }
-        }
-        stage('Execute docker service chosen activity.') {
+        stage('Build/Stop docker service.') {
             when {
                 expression {
-                    env.isDockerUp == 'true' && params.ACTIVITY != 'None'
+                    env.isDockerUp == 'true' && params.ACTIVITY ==~ /docker-(build|stop)/
                 }
             }
             steps {
@@ -44,22 +47,33 @@ pipeline {
                         sh "./enable.sh ${config}"
                     }
                     sh "./server_install.sh -m ${params.ACTIVITY}"
-                }
-            }
-        }
-        stage('Clean up.') {
-            when {
-                expression {
-                    params.ACTIVITY != 'None'
-                }
-            }
-            steps {
-                script {
-                    def configs = params.AVAILABLE_CONFIGURATION.split(',')
                     for (config in configs) {
                         sh "./disable.sh ${config}"
                     }
                 }
+            }
+        }
+        stage('Update docker service.') {
+            when {
+                expression {
+                    env.isDockerUp == 'true' && params.ACTIVITY ==~ /docker-update-replicas/
+                }
+            }
+            steps {
+                script {
+                    def configs = params.AVAILABLE_SERVICES.split(',')
+                    for (config in configs) {
+                        sh "./server_install.sh -j -m ${params.ACTIVITY} -sn ${config} -sr ${params.REPLICAS}"
+                    }
+                }
+            }    
+        }
+        stage('Update available checkboxes.') {
+            when {
+                expression { params.UPDATE_CHECKBOXES == 'Yes' }
+            }
+            steps {
+                sh "$WORKSPACE/jenkins/updateCheckBoxes.sh"
             }
         }
     }

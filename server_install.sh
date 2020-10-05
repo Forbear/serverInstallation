@@ -185,6 +185,16 @@ destroyDocker() {
     sudo docker image rm $docker_image_name
 }
 
+dockerUpdateReplicas() {
+    # Here is check for current replicas number also can be implemented.
+    local selected_service_info=$(sudo docker service ls --filter name=$docker_service_name --format='{{json .}}')
+    if [[ "$selected_service_info" = "" ]]; then
+        echo "$docker_service_name was not found."
+    else
+        sudo docker service update --replicas=$docker_service_replicas $docker_service_name
+    fi
+}
+
 getherFacts() {
     if [ "$verbose" = true ]; then
         echo "Gether facts."
@@ -261,6 +271,9 @@ executeScript() {
                 copyToDockerVolume
                 createDockerService
                 ;;
+            docker-update-replicas)
+                dockerUpdateReplicas
+                ;;
             general)
                 # Here should be docker installation implemented.
                 specifyPackageManager
@@ -268,6 +281,9 @@ executeScript() {
                 makeConfig "$config_file" moveResult
                 ;;
             *)
+                if [[ "$verbose" = true ]]; then
+                    echo "$exec_mode"
+                fi
                 echo "Unexpected execute mode was selected. Error."
         esac
     else
@@ -296,7 +312,6 @@ while [ -n "$1" ]; do
             ;;
         -j)
             from_file=false
-            shift
             ;;
         -f)
             variables_init="$2"
@@ -315,15 +330,21 @@ while [ -n "$1" ]; do
             ;;
         -q)
             quiet=true
+            ;;
+        -sn)
+            docker_service_name="$2"
+            shift
+            ;;
+        -sr)
+            docker_service_replicas="$2"
             shift
             ;;
         -v)
             # Toggle verbose mode. Disabled by default.
             verbose=true
-            shift
             ;;
         *)
-            echo "help?"
+            echo -e "Option $1 was not found."
             exec_mode='error'
     esac
     shift
@@ -346,5 +367,5 @@ else
     echo 'Manual variables input.'
     # Example.
     # ./server_install.sh -j -m docker-build -c configs/default_config.json
-    # executeScript
+    executeScript
 fi

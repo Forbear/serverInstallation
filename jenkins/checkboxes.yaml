@@ -1,7 +1,9 @@
 CheckboxParameter:
-  - key: j-1
-    value: value-1
-  - key: j-2
-    value: value-2
-  - key: j-3
-    value: value-3
+  - key: default.sh
+    value: default.sh
+  - key: exposed.sh
+    value: exposed.sh
+  - key: hiden_one.sh
+    value: hiden_one.sh
+  - key: hiden_zero.sh
+    value: hiden_zero.sh
