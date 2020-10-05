@@ -191,7 +191,7 @@ dockerUpdateReplicas() {
     if [[ "$selected_service_info" = "" ]]; then
         echo "$docker_service_name was not found."
     else
-        sudo docker service update --replicas=$docker_service_replicas $docker_service_name
+        sudo docker service update -q --replicas=$docker_service_replicas $docker_service_name
     fi
 }
 
