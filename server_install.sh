@@ -98,7 +98,11 @@ initiateDependencies() {
     if [ $factsGethered = true ]; then
         # Create docker image if it does not exist.
         if ! [[ "${docker_images[@]}" =~ "${docker_image_name}" ]]; then
-            sudo docker image build --target $docker_target -t $docker_image_name $docker_context
+            if [ "$docker_imported" = true ]; then
+                sudo docker pull $docker_image_name
+            else
+                sudo docker image build --target $docker_target -t $docker_image_name $docker_context
+            fi
         elif [[ "$quiet" = false ]]; then
             echo "Image $docker_image_name exists. Skip."
         fi
@@ -121,22 +125,28 @@ initiateDependencies() {
 
 createDockerService() {
     if [ -f "$docker_context/dockerfile" ]; then
-        if $docker_service_exposed ; then
-            sudo docker service create -q \
-                --name $docker_service_name \
-                --mount source=$docker_volume_name,target=$docker_mount_point \
-                -p $docker_container_bind \
-                --network $docker_network_name \
-                --replicas $docker_service_replicas \
-                $docker_image_name
-        else
-            sudo docker service create -q \
-                --name $docker_service_name \
-                --mount source=$docker_volume_name,target=$docker_mount_point \
-                --network $docker_network_name \
-                --replicas $docker_service_replicas \
-                $docker_image_name
+        # Create initial service. Will be updated with all dependencies below.
+        sudo docker service create -q \
+            --name $docker_service_name \
+            --replicas 0 \
+            $docker_image_name
+        # Udate service if network specified.
+        if [[ "${#docker_network_name}" > 0 ]]; then
+            sudo docker service update -q $docker_service_name \
+                --network-add $docker_network_name
         fi
+        # Udate service if mount specified.
+        if [[ "${#docker_mount_point}" > 0 ]]; then
+            sudo docker service update -q $docker_service_name \
+                --mount-add source=$docker_volume_name,target=$docker_mount_point
+        fi
+        # Update service if publisj specified.
+        if [[ "${#docker_container_bind}" > 0 ]]; then
+            sudo docker service update -q $docker_service_name \
+                --publish-add $docker_container_bind
+        fi
+        sudo docker service update -q $docker_service_name \
+            --replicas $docker_service_replicas
     else
         echo "dockerfile was not found."
     fi
@@ -352,6 +362,9 @@ done
 
 if  $from_file ; then
     activeList=$(ls active/ | grep .sh)
+    if [ "$verbose" = true ]; then
+        echo -e "Active list:\n$activeList\n"
+    fi
     if [[ "${#activeList[@]}" > 0 ]]; then
         for set in ${activeList[@]}; do
             # Import defined variables.
