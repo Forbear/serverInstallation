@@ -2,7 +2,7 @@ properties([
     parameters([
         choice(
             name: 'ACTIVITY',
-            choices: ["None", "docker-build", "docker-stop", "docker-update-replicas"],
+            choices: ["None", "docker-init", "docker-build", "docker-stop", "docker-update-replicas"],
             description: 'Activity to perform.'
         ),
         choice(
@@ -47,7 +47,7 @@ pipeline {
         stage('Build/Stop docker service.') {
             when {
                 expression {
-                    env.isDockerUp == 'true' && params.ACTIVITY ==~ /docker-(build|stop)/
+                    env.isDockerUp == 'true' && params.ACTIVITY ==~ /docker-(build|stop|init)/
                 }
             }
             steps {
@@ -92,6 +92,11 @@ pipeline {
             }
             steps {
                 sh 'sudo docker service ls'
+            }
+        }
+        stage('Collect artifacts.') {
+            steps {
+                archiveArtifacts artifacts: 'jenkins/checkboxes.yaml', followSymlinks: false
             }
         }
     }
