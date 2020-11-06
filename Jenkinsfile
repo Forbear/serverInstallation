@@ -5,15 +5,20 @@ properties([
             choices: ["None", "docker-init", "docker-build", "docker-stop", "docker-update-replicas"],
             description: 'Activity to perform.'
         ),
-        choice(
+        booleanParam(
             name: 'UPDATE_CHECKBOXES',
-            choices: ["Yes", "No"],
+            defaultValue: true
             description: 'Update checkboxes with available configuration.'
         ),
         booleanParam(
             name: 'SHOW_SERVICES_STATE',
             defaultValue: true,
             description: 'Enable services ls after all.'
+        ),
+        booleanParam(
+            name: 'RUN_SONAR',
+            defaultValue: false,
+            description: 'Enable sonarqube service-check.'
         ),
         checkboxParameter(
             name: 'AVAILABLE_CONFIGURATION',
@@ -42,6 +47,7 @@ pipeline {
             returnStdout: true,
             script: 'sudo systemctl is-active docker | grep -q "inactive" && echo -n "false" || echo -n "true"'
         )}"""
+        SECRET_SONAR_TOKEN = credentials('sonarToken')
     }
     stages {
         stage('Build/Stop docker service.') {
@@ -80,7 +86,7 @@ pipeline {
         }
         stage('Update available checkboxes.') {
             when {
-                expression { params.UPDATE_CHECKBOXES == 'Yes' }
+                expression { params.UPDATE_CHECKBOXES }
             }
             steps {
                 sh "$WORKSPACE/jenkins/updateCheckBoxes.sh"
@@ -92,6 +98,24 @@ pipeline {
             }
             steps {
                 sh 'sudo docker service ls'
+            }
+        }
+        stage('Sonar') {
+            when {
+                expression { params.RUN_SONAR }
+            }
+            steps {
+                script {
+                    def scannerHome = tool 'SonarScanner'
+                    withSonarQubeEnv {
+                        sh """${scannerHome}/bin/sonar-scanner -X \
+                            -Dsonar.projectKey=serverInstall \
+                            -Dsonar.sources=. \
+                            -Dsonar.host.url=${env.SONAR_HOST_URL} \
+                            -Dsonar.login=${env.SECRET_SONAR_TOKEN}
+                        """
+                    }
+                }
             }
         }
         stage('Collect artifacts.') {
