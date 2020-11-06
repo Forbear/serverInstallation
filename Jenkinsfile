@@ -7,7 +7,7 @@ properties([
         ),
         booleanParam(
             name: 'UPDATE_CHECKBOXES',
-            defaultValue: true
+            defaultValue: true,
             description: 'Update checkboxes with available configuration.'
         ),
         booleanParam(
