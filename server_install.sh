@@ -295,6 +295,10 @@ createServiceJson() {
     fi
     if ! [[ "$service_image" = "" ]]; then
         local service_line="$service_line $service_image"
+        if [[ "$quiet" = false ]]; then
+            echo "Service line:"
+            echo $service_line | jq '.'
+        fi
         $service_line
     fi
 }
