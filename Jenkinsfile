@@ -63,11 +63,11 @@ pipeline {
                     for (config in configs) {
                         sh "./enable.sh ${config}"
                         if (config.contains("sonar")) {
-                            sh """./server_install.sh \
+                            sh """./server_install.sh -d .\
                                 -ej "{ "sonar": { "external_02": "SONAR_JDBC_PASSWORD=${env.SECRET_SONAR_PASSWD}" } }"
                             """
                         } else {
-                            sh "./server_install.sh"
+                            sh "./server_install.sh -d ."
                         }
                         sh "./disable.sh ${config}"
                     }

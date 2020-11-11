@@ -295,7 +295,7 @@ createServiceJson() {
     fi
     if ! [[ "$service_image" = "" ]]; then
         local service_line="$service_line $service_image"
-        echo $service_line
+        $service_line
     fi
 }
 
