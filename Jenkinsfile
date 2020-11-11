@@ -48,6 +48,7 @@ pipeline {
             script: 'sudo systemctl is-active docker | grep -q "inactive" && echo -n "false" || echo -n "true"'
         )}"""
         SECRET_SONAR_TOKEN = credentials('sonarToken')
+        SECRET_SONAR_PASSWD = credentials('sonarAdminPassword')
     }
     stages {
         stage('Build/Stop docker service.') {
@@ -61,9 +62,13 @@ pipeline {
                     def configs = params.AVAILABLE_CONFIGURATION.split(',')
                     for (config in configs) {
                         sh "./enable.sh ${config}"
-                    }
-                    sh "./server_install.sh -m ${params.ACTIVITY}"
-                    for (config in configs) {
+                        if (config.contains("sonar")) {
+                            sh """./server_install.sh \
+                                -ej "{ "sonar": { "external_02": "SONAR_JDBC_PASSWORD=${env.SECRET_SONAR_PASSWD}" } }"
+                            """
+                        } else {
+                            sh "./server_install.sh"
+                        }
                         sh "./disable.sh ${config}"
                     }
                 }

@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 # exec_mode=docker-init
 docker_imported=true
 docker_container_bind='8081:8081'

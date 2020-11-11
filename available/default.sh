@@ -1,4 +1,4 @@
-#! /bin/bash/
+#!/bin/bash/
 # exec_mode=test-config
 config_file='configs/default_config.json'
 output_dir='/tmp/apache-rp-conf/'

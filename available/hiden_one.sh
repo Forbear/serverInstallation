@@ -1,4 +1,4 @@
-#! /bin/bash/
+#!/bin/bash/
 # exec_mode=docker-build
 config_file='configs/hiden_one_config.json'
 output_dir='/tmp/apache-hiden-one/'
