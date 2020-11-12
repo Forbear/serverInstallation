@@ -206,7 +206,7 @@ createServiceJson() {
                             echo "Docker volume $volumes exists. Skip."
                         fi
                         local target=$(echo $parameter | jq -r ".$volume")
-                        local service_line="$service_line --mount source=$volume,target=$target"
+                        local service_line="$service_line -v $volume:$target"
                     done
                 else
                     if ! [[ "${docker_volumes[@]}" =~ "$volumes" ]]; then
@@ -216,7 +216,7 @@ createServiceJson() {
                         echo "Docker volume $volumes exists. Skip."
                     fi
                     local parameter=$(echo $parameter | jq -r '.[]')
-                    local service_line="$service_line --mount source=$volumes,target=$parameter"
+                    local service_line="$service_line -v $volumes:$parameter"
                 fi
                 ;;
             docker_service_image)
@@ -279,7 +279,7 @@ createServiceJson() {
         fi
         if [[ "$base_image_created" = true ]]; then
             sudo docker container create --name base_container_ds \
-                --mount source=$volumes,target=/tmp/ \
+                -v $volumes:/ \
                 base_image_ds
             local base_container_created=true
         fi
