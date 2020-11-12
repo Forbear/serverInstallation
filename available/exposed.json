@@ -1,17 +1,11 @@
 {
     "exec_mode": "docker-init",
     "make_apache_config": { "configs/exposed_config.json": "/tmp/apache-exposed/" },
-    "docker_service_mount":
-    { 
-        "apache_exposed_volume": "/etc/httpd/conf.d/"
-    },
+    "docker_service_mount": { "apache_exposed_volume": "/etc/httpd/conf.d/" },
     "docker_service_network": "apache-rp-network",
     "docker_service_bind": "80:80",
     "docker_service_name": "apache-exposed",
-    "docker_service_image":
-    { 
-        "proxy_point": "apache_ds"
-    },
+    "docker_service_image": { "proxy_point": "apache_ds" },
     "docker_context": ".",
     "docker_service_replicas": "1"
 }
