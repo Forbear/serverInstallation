@@ -206,7 +206,7 @@ createServiceJson() {
                             echo "Docker volume $volumes exists. Skip."
                         fi
                         local target=$(echo $parameter | jq -r ".$volume")
-                        local service_line="$service_line --mount source=$volume,terget=$target"
+                        local service_line="$service_line --mount source=$volume,target=$target"
                     done
                 else
                     if ! [[ "${docker_volumes[@]}" =~ "$volumes" ]]; then
