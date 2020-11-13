@@ -279,14 +279,14 @@ createServiceJson() {
         fi
         if [[ "$base_image_created" = true ]]; then
             sudo docker container create --name base_container_ds \
-                --mount source=$volumes,target=/ \
+                --mount source=$volumes,target=/opt/ \
                 base_image_ds
             local base_container_created=true
         fi
         if [[ "$base_container_created" = true ]]; then
             local conf_list=$(ls $service_config_dir)
             for file in $conf_list; do
-                sudo docker container cp $service_config_dir$file base_container_ds:/$file
+                sudo docker container cp $service_config_dir$file base_container_ds:/opt/$file
             done
         fi
         if [[ "$base_container_created" = true ]]; then
