@@ -279,7 +279,7 @@ createServiceJson() {
         fi
         if [[ "$base_image_created" = true ]]; then
             sudo docker container create --name base_container_ds \
-                -v $volumes:/ \
+                --mount source=$volumes,target=/ \
                 base_image_ds
             local base_container_created=true
         fi
