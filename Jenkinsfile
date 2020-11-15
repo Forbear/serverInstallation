@@ -49,6 +49,11 @@ pipeline {
         )}"""
         SECRET_SONAR_TOKEN = credentials('sonarToken')
         SECRET_SONAR_PASSWD = credentials('sonarAdminPassword')
+        NEXUS_VERSION = "nexus3"
+        NEXUS_PROTOCOL = "http"
+        NEXUS_URL = "127.0.0.1:8081"
+        NEXUS_REPOSITORY = "serverInstall_repo"
+        NEXUS_CREDENTIAL_ID = "nexusJenkinsUser"
     }
     stages {
         stage('Build/Stop docker service.') {
@@ -125,7 +130,21 @@ pipeline {
         }
         stage('Collect artifacts.') {
             steps {
-                archiveArtifacts artifacts: 'jenkins/checkboxes.yaml', followSymlinks: false
+                nexusArtifactUploader (
+                    nexusVersion: NEXUS_VERSION,
+                    protocol: NEXUS_PROTOCOL,
+                    nexusUrl: NEXUS_URL,
+                    version: "1",
+                    groupId: "test",
+                    repository: NEXUS_REPOSITORY,
+                    credentialsId: NEXUS_CREDENTIAL_ID,
+                    artifacts:[
+                        [artifactId: "artifactId",
+                        classifier: "debug",
+                        file: "serverInstall.sh",
+                        type: "shell"]
+                    ]
+                )
             }
         }
     }
