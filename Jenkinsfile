@@ -141,7 +141,7 @@ pipeline {
                     artifacts:[
                         [artifactId: "artifactId",
                         classifier: "debug",
-                        file: "serverInstall.sh",
+                        file: "server_install.sh",
                         type: "shell"]
                     ]
                 )
