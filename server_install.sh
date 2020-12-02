@@ -227,7 +227,7 @@ createServiceJson() {
                     local service_image="$(echo $service_image | jq -r 'keys | .[]')"
                     if ! [[ "${docker_images[@]}" =~ "$service_image" ]]; then
                         echo "Docker image $service_image:$service_tag was not found. Pulling..."
-                        sudo docker pull $service_image
+                        sudo docker pull $service_image:$service_tag
                     elif [[ "$quiet" = false ]]; then
                         echo "Docker image $service_image:$service_tag exists. Skip."
                     fi
@@ -255,11 +255,14 @@ createServiceJson() {
                 local service_config_dir=$(echo $parameter | jq -r '. | .[]')
                 makeConfig "$config_file" moveResult "$service_config_dir"
                 ;;
+            copy_to_volume)
+                local service_config_dir=$parameter
+                ;;
             external_*)
                 local service_line="$service_line -e $parameter"
                 ;;
             exec_mode)
-                if [[ "$varbose" = true ]]; then
+                if [[ "$verbose" = true ]]; then
                     echo "exec_mode is selected as $parameter."
                 fi
                 ;;
@@ -285,6 +288,9 @@ createServiceJson() {
         fi
         if [[ "$base_container_created" = true ]]; then
             local conf_list=$(ls $service_config_dir)
+            if [[ "$quiet" = false ]]; then
+                echo "Files to copy: $conf_list"
+            fi
             for file in $conf_list; do
                 sudo docker container cp $service_config_dir$file base_container_ds:/opt/$file
             done

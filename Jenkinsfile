@@ -134,7 +134,7 @@ pipeline {
                     nexusVersion: NEXUS_VERSION,
                     protocol: NEXUS_PROTOCOL,
                     nexusUrl: NEXUS_URL,
-                    version: "1",
+                    version: BUILD_NUMBER,
                     groupId: "test",
                     repository: NEXUS_REPOSITORY,
                     credentialsId: NEXUS_CREDENTIAL_ID,
