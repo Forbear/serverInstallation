@@ -26,7 +26,7 @@
         {
             "comment": "Logs placement.",
             "preffix": "CustomLog",
-            "content": ["logs/zero_access_log"],
+            "content": ["logs/zero_access.log"],
             "suffix": "combined"
         }
     }

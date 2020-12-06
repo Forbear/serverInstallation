@@ -206,8 +206,9 @@ createServiceJson() {
                             echo "Docker volume $volumes exists. Skip."
                         fi
                         local target=$(echo $parameter | jq -r ".$volume")
-                        local service_line="$service_line --mount source=$volume,target=$target"
+                        local service_line="$service_line --mount source=$volume,destination=$target"
                     done
+                    local volumes=${volumes[0]}
                 else
                     if ! [[ "${docker_volumes[@]}" =~ "$volumes" ]]; then
                         echo "Docker volume $volumes was not found. Creating..."
@@ -216,7 +217,7 @@ createServiceJson() {
                         echo "Docker volume $volumes exists. Skip."
                     fi
                     local parameter=$(echo $parameter | jq -r '.[]')
-                    local service_line="$service_line --mount source=$volumes,target=$parameter"
+                    local service_line="$service_line --mount source=$volumes,destination=$parameter"
                 fi
                 ;;
             docker_service_mode)
@@ -249,7 +250,7 @@ createServiceJson() {
                 else
                     if ! [[ "${docker_images[@]}" =~ "$service_image" ]]; then
                         echo "Docker image $service_image was not found. Creating..."
-                        sudo docker image build -q --target $image_target -t $service_image .
+                        sudo docker image build -q --target $image_target -t $service_image $docker_context
                     elif [[ "$quiet" = false ]]; then
                         echo "Docker image $service_image exists. Skip."
                     fi
@@ -263,6 +264,9 @@ createServiceJson() {
                     echo "Docker network $parameter exists. Skip."
                 fi
                 local service_line="$service_line --network $parameter"
+                ;;
+            docker_service_user)
+                local service_line="$service_line --user $parameter"
                 ;;
             make_apache_config)
                 local config_file=$(echo $parameter | jq -rc 'keys | .[]')
@@ -303,7 +307,7 @@ createServiceJson() {
         if [[ "$base_container_created" = true ]]; then
             local conf_list=$(ls $service_config_dir)
             if [[ "$quiet" = false ]]; then
-                echo "Files to copy: $conf_list"
+                echo -e "Files to copy: $conf_list\nVolume is: $volumes"
             fi
             for file in $conf_list; do
                 sudo docker container cp $service_config_dir$file base_container_ds:/opt/$file

@@ -1,0 +1,14 @@
+{
+    "exec_mode": "docker-init",
+    "docker_service_network": "elk-network",
+    "docker_service_name": "filebeat-service",
+    "docker_service_image": { "filebeat": "filebeat_ds" },
+    "docker_service_mount": { 
+        "apache_hiden_one_log_volume": "/var/log/httpd/one/",
+        "apache_hiden_zero_log_volume": "/var/log/httpd/zero/"
+    },
+    "docker_context": "./configs/filebeat",
+    "docker_service_mode": { "global": "-" },
+    "docker_service_user": "root",
+    "external_0": "setup.kibana.host=kibana-service:5601"
+}

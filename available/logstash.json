@@ -1,0 +1,9 @@
+{
+    "exec_mode": "docker-init",
+    "docker_service_network": "elk-network",
+    "docker_service_name": "logstash-service",
+    "docker_service_image": { "logstash": "logstash_ds" },
+    "docker_context": "./config/logstash",
+    "docker_service_mode": { "global": "-" },
+    "docker_service_user": "root"
+}

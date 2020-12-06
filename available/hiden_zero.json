@@ -1,7 +1,10 @@
 {
     "exec_mode": "docker-init",
     "make_apache_config": { "configs/hiden_zero_config.json": "/tmp/apache-hiden-zero/" },
-    "docker_service_mount": { "apache_hiden_zero_volume": "/etc/httpd/conf.d/" },
+    "docker_service_mount": {
+        "apache_hiden_zero_log_volume": "/var/log/httpd/",
+        "apache_hiden_zero_config_volume": "/etc/httpd/conf.d/"
+    },
     "docker_service_network": "apache-rp-network",
     "docker_service_name": "apache-hiden-zero",
     "docker_service_image": { "hiden_point": "apache_hiden_ds" },
