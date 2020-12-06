@@ -5,5 +5,5 @@
     "docker_service_name": "nexus-repo",
     "docker_service_image": { "imported": { "sonatype/nexus3": "latest" } },
     "docker_context": ".",
-    "docker_service_replicas": "1"
+    "docker_service_mode": { "global": "-" }
 }

@@ -6,5 +6,5 @@
     "docker_service_name": "apache-hiden-one",
     "docker_service_image": { "hiden_point": "apache_hiden_ds" },
     "docker_context": ".",
-    "docker_service_replicas": "1"
+    "docker_service_mode": { "replicated": "1" }
 }

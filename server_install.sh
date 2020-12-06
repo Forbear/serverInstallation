@@ -192,9 +192,9 @@ createServiceJson() {
             docker_service_name)
                 local service_line="$service_line --name $parameter"
                 ;;
-            docker_service_replicas)
-                local service_line="$service_line --replicas $parameter"
-                ;;
+            # docker_service_replicas)
+            #     local service_line="$service_line --replicas $parameter"
+            #     ;;
             docker_service_mount)
                 local volumes=($(echo $parameter | jq -r '. | keys | .[]'))
                 if [[ "${#volumes[@]}" > 1 ]]; then
@@ -218,6 +218,20 @@ createServiceJson() {
                     local parameter=$(echo $parameter | jq -r '.[]')
                     local service_line="$service_line --mount source=$volumes,target=$parameter"
                 fi
+                ;;
+            docker_service_mode)
+                local service_mode=$(echo $parameter | jq -r 'keys | .[]')
+                case $service_mode in
+                    replicated)
+                        local service_replicas=$(echo $parameter | jq -r '. | .[]')
+                        local service_line="$service_line --mode $service_mode --replicas $service_replicas"
+                        ;;
+                    global)
+                        local service_line="$service_line --mode $service_mode"
+                        ;;
+                    *)
+                        echo "Service_mode error #006."
+                esac
                 ;;
             docker_service_image)
                 local image_target=$(echo $parameter | jq -r 'keys | .[]')
@@ -303,7 +317,7 @@ createServiceJson() {
         local service_line="$service_line $service_image"
         if [[ "$quiet" = false ]]; then
             echo "Service line:"
-            echo $service_line | jq '.'
+            echo $service_line
         fi
         $service_line
     fi
