@@ -3,7 +3,7 @@ filebeat.inputs:
   paths:
     - /var/log/httpd/one/*.log
     - /var/log/httpd/zero/*.log
-  ignore_older: 3h
+  ignore_older: 1h
 
 filebeat.config:
   modules:
@@ -13,8 +13,8 @@ filebeat.config:
 processors:
 - add_cloud_metadata: ~
 
-output.elasticsearch:
-  hosts: ["elasticsearch-service:9200"]
+output.logstash:
+  hosts: ["logstash-service:5044"]
 
 setup.kibana:
   host: "kibana-service:5601"

@@ -9,6 +9,5 @@
     },
     "docker_context": "./configs/filebeat",
     "docker_service_mode": { "global": "-" },
-    "docker_service_user": "root",
-    "external_0": "setup.kibana.host=kibana-service:5601"
+    "docker_service_user": "root"
 }

@@ -581,6 +581,7 @@ if  $from_file ; then
                         external_json_value=$(echo $external_json | jq -r ".$config_key")
                         json_source=$(update_json_with_external "$json_source" "$external_json_value")
                     fi
+                    docker_context=$(echo $json_source | jq -r '.docker_context')
                     exec_mode=$(echo $json_source | jq -r '.exec_mode')
                     executeScript
                     ;;

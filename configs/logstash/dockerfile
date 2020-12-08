@@ -1,5 +1,7 @@
 FROM docker.elastic.co/logstash/logstash:7.10.0 as logstash
 LABEL maintainer="Daniil Silniahin"
 ENV container docker
-WORKDIR /usr/share/logstash/config/
-COPY logstash.yml .
+WORKDIR /usr/share/logstash/
+COPY logstash.yml ./config/
+COPY apache_filebeat_pipeline.conf ./pipeline/
+RUN rm ./pipeline/logstash.conf
