@@ -85,9 +85,9 @@ pipeline {
                 script {
                     def elk_arr = ["elasticsearch.json", "logstash.json", "kibana.json", "filebeat.json"]
                     for (component in elk_arr) {
-                        sh "./enable ${component}"
+                        sh "./enable.sh ${component}"
                         sh "./server_install.sh"
-                        sh "./disable ${component}"
+                        sh "./disable.sh ${component}"
                         sh "sleep 3"
                     }
                 }
