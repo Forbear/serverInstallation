@@ -2,4 +2,4 @@ FROM docker.elastic.co/kibana/kibana:7.10.0 as kibana
 LABEL maintainer="Daniil Silniahin"
 ENV container docker
 WORKDIR /usr/share/kibana/config/
-COPY kibana.yml .
+COPY kibana.yaml .
