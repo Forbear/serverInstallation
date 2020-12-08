@@ -2,7 +2,7 @@ properties([
     parameters([
         choice(
             name: 'ACTIVITY',
-            choices: ["None", "docker-init", "docker-build", "docker-stop", "docker-update-replicas"],
+            choices: ["None", "docker-init", "docker-stop", "docker-update-replicas", "up-ELK"],
             description: 'Activity to perform.'
         ),
         booleanParam(
@@ -59,7 +59,7 @@ pipeline {
         stage('Build/Stop docker service.') {
             when {
                 expression {
-                    env.isDockerUp == 'true' && params.ACTIVITY ==~ /docker-(build|stop|init)/
+                    env.isDockerUp == 'true' && params.ACTIVITY ==~ /docker-(stop|init)/
                 }
             }
             steps {
@@ -75,6 +75,20 @@ pipeline {
                             sh "./server_install.sh"
                         }
                         sh "./disable.sh ${config}"
+                    }
+                }
+            }
+        }
+        stage('Up ELK stack.') {
+            when { expression { params.ACTIVITY == 'up-ELK' } }
+            steps {
+                script {
+                    def elk_arr = ["elasticsearch.json", "logstash.json", "kibana.json", "filebeat.json"]
+                    for (component in elk_arr) {
+                        sh "./enable ${component}"
+                        sh "./server_install.sh"
+                        sh "./disable ${component}"
+                        sh "sleep 3"
                     }
                 }
             }
