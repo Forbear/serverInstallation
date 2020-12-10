@@ -102,8 +102,12 @@ pipeline {
             steps {
                 script {
                     def configs = params.AVAILABLE_SERVICES.split(',')
-                    for (config in configs) {
-                        sh "./server_install.sh -j -m ${params.ACTIVITY} -sn ${config} -sr ${params.REPLICAS}"
+                    if (configs.size() > 1) {
+                        for (config in configs) {
+                            sh "./server_install.sh -j -m ${params.ACTIVITY} -sn ${config} -sr ${params.REPLICAS}"
+                        }
+                    } else {
+                        sh "./server_install.sh -j -m ${params.ACTIVITY} -sn ${configs} -sr ${params.REPLICAS}"
                     }
                 }
             }    
