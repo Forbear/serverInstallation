@@ -1,0 +1,14 @@
+{
+    "exec_mode": "docker-init",
+    "docker_service_bind": "9000:9000",
+    "docker_service_name": "sonarqube-repo",
+    "docker_service_mount": {
+        "sonar_data_volume": "/opt/sonarqube/data",
+	    "sonar_extentions_volume": "/opt/sonarqube/extensions",
+	    "sonar_logs_volume": "/opt/sonarqube/logs"
+    },
+    "docker_service_image": { "imported": { "sonarqube": "community" } },
+    "docker_context": ".",
+    "docker_service_mode": { "global": "-" },
+    "external_0": "SONAR_JDBC_USERNAME=admin"
+}

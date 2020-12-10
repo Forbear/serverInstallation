@@ -1,0 +1,13 @@
+{
+    "exec_mode": "docker-init",
+    "make_apache_config": { "configs/hiden_one_config.json": "/tmp/apache-hiden-one/" },
+    "docker_service_mount": {
+        "apache_hiden_one_log_volume": "/var/log/httpd/",
+        "apache_hiden_one_config_volume": "/etc/httpd/conf.d/"
+    },
+    "docker_service_network": "apache-rp-network",
+    "docker_service_name": "apache-hiden-one",
+    "docker_service_image": { "hiden_point": "apache_hiden_ds" },
+    "docker_context": ".",
+    "docker_service_mode": { "replicated": "1" }
+}

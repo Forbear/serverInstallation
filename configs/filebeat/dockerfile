@@ -1,0 +1,6 @@
+FROM docker.elastic.co/beats/filebeat:7.10.0 as filebeat
+LABEL maintainer="Daniil Silniahin"
+ENV container docker
+RUN /usr/share/filebeat/filebeat modules enable apache
+WORKDIR /usr/share/filebeat/
+COPY filebeat.yml .

@@ -1,0 +1,9 @@
+{
+    "exec_mode": "docker-init",
+    "docker_service_network": "elk-network",
+    "docker_service_bind": "5601:5601",
+    "docker_service_name": "kibana-service",
+    "docker_service_image": { "kibana": "kibana_ds" },
+    "docker_context": "./configs/kibana",
+    "docker_service_mode": { "global": "-" }
+}

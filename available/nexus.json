@@ -1,0 +1,9 @@
+{
+    "exec_mode": "docker-init",
+    "docker_service_mount": { "nexus_data_volume": "/nexus-data" },
+    "docker_service_bind": "8081:8081",
+    "docker_service_name": "nexus-repo",
+    "docker_service_image": { "imported": { "sonatype/nexus3": "latest" } },
+    "docker_context": ".",
+    "docker_service_mode": { "global": "-" }
+}

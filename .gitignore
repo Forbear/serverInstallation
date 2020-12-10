@@ -1,2 +1,4 @@
 *.bak
 active/*.sh
+active/*.json
+tmp/

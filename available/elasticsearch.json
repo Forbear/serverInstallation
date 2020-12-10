@@ -1,0 +1,11 @@
+{
+    "exec_mode": "docker-init",
+    "docker_service_mount": { "elasticsearch_volume": "/usr/share/elasticsearch/data" },
+    "docker_service_network": "elk-network",
+    "docker_service_bind": "9200:9200",
+    "docker_service_name": "elasticsearch-service",
+    "docker_service_image": { "imported": { "docker.elastic.co/elasticsearch/elasticsearch": "7.10.0" } },
+    "docker_context": ".",
+    "docker_service_mode": { "global": "-" },
+    "external_0": "discovery.type=single-node"
+}

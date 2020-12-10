@@ -1,0 +1,20 @@
+filebeat.inputs:
+- type: log
+  paths:
+    - /var/log/httpd/one/*.log
+    - /var/log/httpd/zero/*.log
+  ignore_older: 1h
+
+filebeat.config:
+  modules:
+    path: ${path.config}/modules.d/*.yml
+    reload.enabled: false
+
+processors:
+- add_cloud_metadata: ~
+
+output.logstash:
+  hosts: ["logstash-service:5044"]
+
+setup.kibana:
+  host: "kibana-service:5601"

@@ -1,1 +1,5 @@
 Active directory should contain symbolic links to 'available' set of variables.
+
+### FILEBEAT
+In case output.elasticsearch is selected hosts entry should be created for image build.
+# sudo docker swarm init
